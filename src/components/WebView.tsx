@@ -42,7 +42,7 @@ export const WebView: Component = () => {
         <iframe
           class="sandbox-frame"
           srcdoc={htmlContent()}
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-forms"
         ></iframe>
       )}
       {!isLoading() && !error() && !htmlContent() && (
