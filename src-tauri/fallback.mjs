@@ -13,8 +13,17 @@ async function main() {
 
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    // Wait an extra moment for any dynamic hydration
-    await page.waitForTimeout(2000);
+    
+    // Inject <base> tag to fix relative links for CSS/assets inside the iframe
+    await page.evaluate((url) => {
+      let base = document.querySelector('base');
+      if (!base) {
+        base = document.createElement('base');
+        document.head.prepend(base);
+      }
+      base.href = url;
+    }, url);
+
     const html = await page.content();
     console.log(html);
   } catch (error) {
