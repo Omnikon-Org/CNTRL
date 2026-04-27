@@ -28,10 +28,11 @@ pub async fn fetch_fallback_html(app: &tauri::AppHandle, url: &str) -> Result<St
 }
 
 fn log_fallback(url: &str) -> Result<(), VibError> {
+    let log_path = std::env::temp_dir().join("vibe-fallback.log");
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open("fallback.log")?;
+        .open(log_path)?;
 
     let timestamp = chrono::Utc::now().to_rfc3339();
     writeln!(file, "[{}] Fallback activated for URL: {}", timestamp, url)?;
