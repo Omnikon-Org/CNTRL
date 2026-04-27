@@ -1,6 +1,7 @@
 import { Component, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { browserState, browserActions } from '../stores/browserStore';
+import { SettingsPage } from './SettingsPage';
 import './WebView.css';
 
 export const WebView: Component = () => {
@@ -67,7 +68,9 @@ export const WebView: Component = () => {
 
   return (
     <div class="webview-container" ref={containerRef}>
-      {activeTab()?.fallback_mode && (
+      {activeTab()?.url === 'vibe://settings' && <SettingsPage />}
+      
+      {activeTab()?.fallback_mode && activeTab()?.url !== 'vibe://settings' && (
         <>
           {isLoading() && <div class="loading">Loading compatibility mode...</div>}
           {error() && <div class="error">{error()}</div>}

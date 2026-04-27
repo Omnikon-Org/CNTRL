@@ -1,8 +1,41 @@
 .url-bar-container {
   display: flex;
+  align-items: center;
   padding: 8px 16px;
   background-color: var(--color-bg-base);
   border-bottom: 0.5px solid var(--color-border);
+  gap: 12px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-btn svg, .settings-icon-btn svg {
+  color: var(--color-text-secondary);
+  transition: color 0.2s;
+}
+
+.nav-btn:hover svg, .settings-icon-btn:hover svg {
+  color: var(--color-text-primary);
 }
 
 .url-bar {
@@ -37,4 +70,22 @@
 
 .url-input::placeholder {
   color: var(--color-text-secondary);
+}
+
+.settings-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }

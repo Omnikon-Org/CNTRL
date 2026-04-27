@@ -55,5 +55,17 @@ export const browserActions = {
 
   async fetchFallback(url: string) {
     return await invoke<string>('fetch_fallback', { url });
+  },
+  
+  async goBack(id: string) {
+    await invoke('go_back', { id });
+  },
+
+  async goForward(id: string) {
+    await invoke('go_forward', { id });
+  },
+
+  async reload(id: string) {
+    await invoke('reload', { id });
   }
 };

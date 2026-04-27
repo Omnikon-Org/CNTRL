@@ -97,23 +97,31 @@ impl BrowserService {
             }
 
             // Spawn 10s timeout to trigger fallback
-            let state_clone2 = self.state.clone();
-            let app_clone = app.clone();
             let url_clone = url.clone();
-            tauri::async_runtime::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(10)).await;
-                let mut state = state_clone2.write();
-                if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id_clone) {
-                    if !t.loaded {
-                        println!("Navigation timed out for {}. Triggering fallback.", url_clone);
-                        t.fallback_mode = true;
-                        if let Some(w) = app_clone.get_webview(&format!("tab-{}", id_clone)) {
-                            let _ = w.hide(); // Hide native webview so iframe can show
+            if !url_clone.starts_with("vibe://") && url_clone != "about:blank" {
+                let state_clone2 = self.state.clone();
+                let app_clone = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    tokio::time::sleep(Duration::from_secs(10)).await;
+                    let mut state = state_clone2.write();
+                    if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id_clone) {
+                        if !t.loaded {
+                            println!("Navigation timed out for {}. Triggering fallback.", url_clone);
+                            t.fallback_mode = true;
+                            if let Some(w) = app_clone.get_webview(&format!("tab-{}", id_clone)) {
+                                let _ = w.hide(); // Hide native webview so iframe can show
+                            }
+                            let _ = app_clone.emit("tabs-updated", ());
                         }
-                        let _ = app_clone.emit("tabs-updated", ());
                     }
+                });
+            } else {
+                // Instantly mark internal pages as loaded
+                let mut state = self.state.write();
+                if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id) {
+                    t.loaded = true;
                 }
-            });
+            }
         }
 
         let mut state = self.state.write();
@@ -164,30 +172,36 @@ impl BrowserService {
             tab.loaded = false;
             
             if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
-                if let Ok(parsed_url) = url.parse() {
+                if url.starts_with("vibe://") {
+                    let _ = w.hide();
+                } else if let Ok(parsed_url) = url.parse() {
                     let _ = w.navigate(parsed_url);
                     let _ = w.show(); // Ensure native is visible again since fallback might have hidden it
                 }
             }
 
             // Spawn timeout for navigation
-            let state_clone = self.state.clone();
-            let app_clone = app.clone();
             let url_clone = url.clone();
-            tauri::async_runtime::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(10)).await;
-                let mut state = state_clone.write();
-                if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id) {
-                    if !t.loaded {
-                        println!("Navigation timed out for {}. Triggering fallback.", url_clone);
-                        t.fallback_mode = true;
-                        if let Some(w) = app_clone.get_webview(&format!("tab-{}", id)) {
-                            let _ = w.hide();
+            if !url_clone.starts_with("vibe://") && url_clone != "about:blank" {
+                let state_clone = self.state.clone();
+                let app_clone = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    tokio::time::sleep(Duration::from_secs(10)).await;
+                    let mut state = state_clone.write();
+                    if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id) {
+                        if !t.loaded {
+                            println!("Navigation timed out for {}. Triggering fallback.", url_clone);
+                            t.fallback_mode = true;
+                            if let Some(w) = app_clone.get_webview(&format!("tab-{}", id)) {
+                                let _ = w.hide();
+                            }
+                            let _ = app_clone.emit("tabs-updated", ());
                         }
-                        let _ = app_clone.emit("tabs-updated", ());
                     }
-                }
-            });
+                });
+            } else {
+                tab.loaded = true;
+            }
 
             Ok(())
         } else {
@@ -213,8 +227,16 @@ impl BrowserService {
                     }
                 }
             }
-            if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
-                let _ = w.show();
+            if let Some(tab) = state.tabs.iter().find(|t| t.id == id) {
+                if !tab.url.starts_with("vibe://") && !tab.fallback_mode {
+                    if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+                        let _ = w.show();
+                    }
+                } else if tab.url.starts_with("vibe://") {
+                    if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+                        let _ = w.hide();
+                    }
+                }
             }
             Ok(())
         } else {
@@ -231,6 +253,27 @@ impl BrowserService {
                     size: tauri::Size::Logical(tauri::LogicalSize::new(width, height)),
                 });
             }
+        }
+        Ok(())
+    }
+
+    pub fn go_back(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+        if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+            let _ = w.eval("window.history.back()");
+        }
+        Ok(())
+    }
+
+    pub fn go_forward(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+        if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+            let _ = w.eval("window.history.forward()");
+        }
+        Ok(())
+    }
+
+    pub fn reload(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+        if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+            let _ = w.eval("window.location.reload()");
         }
         Ok(())
     }
