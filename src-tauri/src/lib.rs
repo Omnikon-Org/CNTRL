@@ -20,6 +20,7 @@ pub fn run() {
             commands::browser::get_tabs,
             commands::browser::set_active_tab,
             commands::browser::fetch_fallback,
+            commands::browser::update_tab_bounds,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

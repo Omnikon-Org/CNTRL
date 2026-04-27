@@ -5,13 +5,19 @@ export interface Tab {
   id: string;
   url: string;
   title: string;
-  is_background: bool;
+  is_background: boolean;
   created_at: string;
+  fallback_mode: boolean;
 }
 
 export const [browserState, setBrowserState] = createStore({
   tabs: [] as Tab[],
   activeTabId: null as string | null,
+});
+
+import { listen } from '@tauri-apps/api/event';
+listen('tabs-updated', () => {
+  browserActions.fetchTabs();
 });
 
 export const browserActions = {

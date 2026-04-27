@@ -15,7 +15,7 @@ Vibe Browser is a lightweight, AI-driven autonomous browser built with Tauri (Ru
 
 ## 7-Phase Build Plan
 - [x] **Phase 1**: Project Scaffold & CI Pipeline
-- [ ] **Phase 2**: Webview Engine & Browser Chrome
+- [x] **Phase 2**: Webview Engine & Browser Chrome
 - [ ] **Phase 3**: Hybrid Brain & Model Router
 - [ ] **Phase 4**: Intent Layer & Command Bar
 - [ ] **Phase 5**: Memory Engine & Security Layer

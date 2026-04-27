@@ -6,8 +6,11 @@ import { WebView } from './components/WebView';
 import './App.css';
 
 function App() {
-  onMount(() => {
-    browserActions.fetchTabs();
+  onMount(async () => {
+    await browserActions.fetchTabs();
+    if (browserState.tabs.length === 0) {
+      await browserActions.openTab('https://google.com');
+    }
   });
 
   return (

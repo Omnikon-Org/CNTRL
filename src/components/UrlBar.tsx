@@ -27,6 +27,8 @@ export const UrlBar: Component = () => {
 
   const isHttps = () => inputUrl().startsWith('https://');
 
+  const activeTab = () => browserState.tabs.find(t => t.id === browserState.activeTabId);
+
   return (
     <div class="url-bar-container">
       <div class="url-bar">
@@ -39,6 +41,11 @@ export const UrlBar: Component = () => {
           class="url-input"
           placeholder="Enter URL or search"
         />
+        {activeTab()?.fallback_mode && (
+          <span class="fallback-badge" style="color: var(--color-accent); font-size: 0.8rem; margin-left: 8px; font-weight: bold; white-space: nowrap;">
+            ⚡ compat mode
+          </span>
+        )}
       </div>
     </div>
   );
