@@ -16,8 +16,14 @@ pub fn open_tab(
 }
 
 #[tauri::command]
-pub fn close_tab(id: Uuid, app: tauri::AppHandle, browser_service: State<'_, BrowserService>) -> Result<(), String> {
-    browser_service.close_tab(&app, id).map_err(|e| e.to_string())
+pub fn close_tab(
+    id: Uuid,
+    app: tauri::AppHandle,
+    browser_service: State<'_, BrowserService>,
+) -> Result<(), String> {
+    browser_service
+        .close_tab(&app, id)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -27,7 +33,9 @@ pub fn navigate(
     app: tauri::AppHandle,
     browser_service: State<'_, BrowserService>,
 ) -> Result<(), String> {
-    browser_service.navigate(&app, id, url).map_err(|e| e.to_string())
+    browser_service
+        .navigate(&app, id, url)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -36,12 +44,15 @@ pub fn get_tabs(browser_service: State<'_, BrowserService>) -> Result<Vec<Tab>, 
 }
 
 #[tauri::command]
-pub fn set_active_tab(id: Uuid, app: tauri::AppHandle, browser_service: State<'_, BrowserService>) -> Result<(), String> {
+pub fn set_active_tab(
+    id: Uuid,
+    app: tauri::AppHandle,
+    browser_service: State<'_, BrowserService>,
+) -> Result<(), String> {
     browser_service
         .set_active_tab(&app, id)
         .map_err(|e| e.to_string())
 }
-
 
 #[tauri::command]
 pub async fn fetch_fallback(url: String, app: tauri::AppHandle) -> Result<String, String> {
@@ -59,20 +70,36 @@ pub fn update_tab_bounds(
     app: tauri::AppHandle,
     browser_service: State<'_, BrowserService>,
 ) -> Result<(), String> {
-    browser_service.update_tab_bounds(&app, x, y, width, height).map_err(|e| e.to_string())
+    browser_service
+        .update_tab_bounds(&app, x, y, width, height)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn go_back(id: Uuid, app: tauri::AppHandle, browser_service: State<'_, BrowserService>) -> Result<(), String> {
+pub fn go_back(
+    id: Uuid,
+    app: tauri::AppHandle,
+    browser_service: State<'_, BrowserService>,
+) -> Result<(), String> {
     browser_service.go_back(&app, id).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn go_forward(id: Uuid, app: tauri::AppHandle, browser_service: State<'_, BrowserService>) -> Result<(), String> {
-    browser_service.go_forward(&app, id).map_err(|e| e.to_string())
+pub fn go_forward(
+    id: Uuid,
+    app: tauri::AppHandle,
+    browser_service: State<'_, BrowserService>,
+) -> Result<(), String> {
+    browser_service
+        .go_forward(&app, id)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn reload(id: Uuid, app: tauri::AppHandle, browser_service: State<'_, BrowserService>) -> Result<(), String> {
+pub fn reload(
+    id: Uuid,
+    app: tauri::AppHandle,
+    browser_service: State<'_, BrowserService>,
+) -> Result<(), String> {
     browser_service.reload(&app, id).map_err(|e| e.to_string())
 }

@@ -1,5 +1,5 @@
 {
-  "name": "tauri-app",
+  "name": "cntrl-browser",
   "version": "0.1.0",
   "description": "",
   "type": "module",
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
+    "@eslint/js": "^10.0.1",
     "@solidjs/testing-library": "^0.8.10",
     "@tauri-apps/cli": "^2",
     "@testing-library/jest-dom": "^6.9.1",

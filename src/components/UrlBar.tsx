@@ -42,7 +42,7 @@ export const UrlBar: Component = () => {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
       let url = inputUrl();
-      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('vibe://')) {
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('cntrl://')) {
         url = `https://${url}`;
       }
       
@@ -56,9 +56,9 @@ export const UrlBar: Component = () => {
 
   const handleOpenSettings = () => {
     if (browserState.activeTabId) {
-      browserActions.navigate(browserState.activeTabId, 'vibe://settings');
+      browserActions.navigate(browserState.activeTabId, 'cntrl://settings');
     } else {
-      browserActions.openTab('vibe://settings');
+      browserActions.openTab('cntrl://settings');
     }
   };
 

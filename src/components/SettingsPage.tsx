@@ -32,8 +32,9 @@ export const SettingsPage: Component = () => {
       setIsLoadingModels(true);
       getOpenRouterFreeModels().then((res) => {
         setModels(res);
-        if (!res.includes(selectedModel()) && res.length > 0) {
-          setSelectedModel(res[0]);
+        const firstModel = res[0];
+        if (firstModel !== undefined && !res.includes(selectedModel())) {
+          setSelectedModel(firstModel);
         }
         setIsLoadingModels(false);
       });
@@ -41,8 +42,9 @@ export const SettingsPage: Component = () => {
       setIsLoadingModels(true);
       getHfModels().then((res) => {
         setModels(res);
-        if (!res.includes(selectedModel()) && res.length > 0) {
-          setSelectedModel(res[0]);
+        const firstModel = res[0];
+        if (firstModel !== undefined && !res.includes(selectedModel())) {
+          setSelectedModel(firstModel);
         }
         setIsLoadingModels(false);
       });
@@ -106,7 +108,7 @@ export const SettingsPage: Component = () => {
   return (
     <div class="settings-page">
       <div class="settings-container">
-        <h1>Vibe Settings</h1>
+        <h1>CNTRL Settings</h1>
         <form onSubmit={handleSave}>
           <div class="form-group">
             <label>AI Tier</label>

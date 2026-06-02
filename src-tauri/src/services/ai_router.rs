@@ -2,11 +2,11 @@ use parking_lot::RwLock;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::sync::Arc;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Arc;
 
-use crate::error::VibError;
+use crate::error::CntrlError;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ModelTier {
@@ -49,7 +49,7 @@ impl AiRouter {
         }
 
         let key_exists = storage_path.exists();
-        
+
         let mut default_config = ModelConfig::default();
         if key_exists {
             default_config.openrouter_key = Some("sk-or-***".to_string());
@@ -68,7 +68,7 @@ impl AiRouter {
                 let _ = fs::write(&self.storage_path, key);
             }
         }
-        
+
         if self.storage_path.exists() {
             new_config.openrouter_key = Some("sk-or-***".to_string());
         } else {
@@ -83,12 +83,12 @@ impl AiRouter {
         self.config.read().clone()
     }
 
-    fn get_openrouter_key(&self) -> Result<String, VibError> {
+    fn get_openrouter_key(&self) -> Result<String, CntrlError> {
         fs::read_to_string(&self.storage_path)
-            .map_err(|_| VibError::Ai("OpenRouter API key not found in storage".to_string()))
+            .map_err(|_| CntrlError::Ai("OpenRouter API key not found in storage".to_string()))
     }
 
-    pub async fn ask_model(&self, prompt: String) -> Result<String, VibError> {
+    pub async fn ask_model(&self, prompt: String) -> Result<String, CntrlError> {
         let config = self.config.read().clone();
 
         match config.tier {
@@ -98,7 +98,11 @@ impl AiRouter {
         }
     }
 
-    async fn call_openrouter(&self, config: &ModelConfig, prompt: String) -> Result<String, VibError> {
+    async fn call_openrouter(
+        &self,
+        config: &ModelConfig,
+        prompt: String,
+    ) -> Result<String, CntrlError> {
         let key = self.get_openrouter_key()?;
 
         let body = json!({
@@ -108,21 +112,29 @@ impl AiRouter {
             ]
         });
 
-        let res = self.client.post("https://openrouter.ai/api/v1/chat/completions")
+        let res = self
+            .client
+            .post("https://openrouter.ai/api/v1/chat/completions")
             .bearer_auth(key)
             .json(&body)
             .send()
             .await
-            .map_err(|e| VibError::Ai(format!("HTTP error: {}", e)))?;
+            .map_err(|e| CntrlError::Ai(format!("HTTP error: {}", e)))?;
 
         if !res.status().is_success() {
             let status = res.status();
             let err_text = res.text().await.unwrap_or_else(|_| "".to_string());
-            return Err(VibError::Ai(format!("API error {}: {}", status, err_text)));
+            return Err(CntrlError::Ai(format!(
+                "API error {}: {}",
+                status, err_text
+            )));
         }
 
-        let data: serde_json::Value = res.json().await.map_err(|e| VibError::Ai(format!("JSON parsing error: {}", e)))?;
-        
+        let data: serde_json::Value = res
+            .json()
+            .await
+            .map_err(|e| CntrlError::Ai(format!("JSON parsing error: {}", e)))?;
+
         let content = data["choices"][0]["message"]["content"]
             .as_str()
             .unwrap_or("No response generated")
@@ -131,7 +143,11 @@ impl AiRouter {
         Ok(content)
     }
 
-    async fn call_ollama(&self, config: &ModelConfig, prompt: String) -> Result<String, VibError> {
+    async fn call_ollama(
+        &self,
+        config: &ModelConfig,
+        prompt: String,
+    ) -> Result<String, CntrlError> {
         let body = json!({
             "model": config.selected_model.clone(),
             "prompt": prompt,
@@ -140,18 +156,23 @@ impl AiRouter {
 
         let url = format!("{}/api/generate", config.ollama_url.trim_end_matches('/'));
 
-        let res = self.client.post(&url)
+        let res = self
+            .client
+            .post(&url)
             .json(&body)
             .send()
             .await
-            .map_err(|e| VibError::Ai(format!("Ollama connection error: {}", e)))?;
+            .map_err(|e| CntrlError::Ai(format!("Ollama connection error: {}", e)))?;
 
         if !res.status().is_success() {
-            return Err(VibError::Ai(format!("Ollama error: {}", res.status())));
+            return Err(CntrlError::Ai(format!("Ollama error: {}", res.status())));
         }
 
-        let data: serde_json::Value = res.json().await.map_err(|e| VibError::Ai(format!("JSON parsing error: {}", e)))?;
-        
+        let data: serde_json::Value = res
+            .json()
+            .await
+            .map_err(|e| CntrlError::Ai(format!("JSON parsing error: {}", e)))?;
+
         let content = data["response"]
             .as_str()
             .unwrap_or("No response generated")
@@ -164,7 +185,11 @@ impl AiRouter {
         let lower = intent.to_lowercase();
         if lower.contains("offline") || lower.contains("private") || lower.contains("local") {
             ModelTier::Local
-        } else if lower.contains("code") || lower.contains("analyze") || lower.contains("complex") || lower.contains("reason") {
+        } else if lower.contains("code")
+            || lower.contains("analyze")
+            || lower.contains("complex")
+            || lower.contains("reason")
+        {
             ModelTier::Premium
         } else {
             ModelTier::Freemium
@@ -172,20 +197,26 @@ impl AiRouter {
     }
 
     pub fn score_sample_intents(&self, intents: Vec<String>) -> Vec<(String, ModelTier)> {
-        intents.into_iter().map(|intent| {
-            let tier = self.score_intent(&intent);
-            (intent, tier)
-        }).collect()
+        intents
+            .into_iter()
+            .map(|intent| {
+                let tier = self.score_intent(&intent);
+                (intent, tier)
+            })
+            .collect()
     }
 
-    pub async fn fetch_hf_models(&self) -> Result<Vec<String>, VibError> {
+    pub async fn fetch_hf_models(&self) -> Result<Vec<String>, CntrlError> {
         let res = self.client.get("https://huggingface.co/api/models?pipeline_tag=text-generation&sort=downloads&direction=-1&limit=50")
             .send()
             .await
-            .map_err(|e| VibError::Ai(format!("HTTP error: {}", e)))?;
+            .map_err(|e| CntrlError::Ai(format!("HTTP error: {}", e)))?;
 
-        let data: serde_json::Value = res.json().await.map_err(|e| VibError::Ai(format!("JSON parsing error: {}", e)))?;
-        
+        let data: serde_json::Value = res
+            .json()
+            .await
+            .map_err(|e| CntrlError::Ai(format!("JSON parsing error: {}", e)))?;
+
         let mut models = Vec::new();
         if let Some(arr) = data.as_array() {
             for item in arr {
@@ -197,14 +228,19 @@ impl AiRouter {
         Ok(models)
     }
 
-    pub async fn fetch_openrouter_free_models(&self) -> Result<Vec<String>, VibError> {
-        let res = self.client.get("https://openrouter.ai/api/v1/models")
+    pub async fn fetch_openrouter_free_models(&self) -> Result<Vec<String>, CntrlError> {
+        let res = self
+            .client
+            .get("https://openrouter.ai/api/v1/models")
             .send()
             .await
-            .map_err(|e| VibError::Ai(format!("HTTP error: {}", e)))?;
+            .map_err(|e| CntrlError::Ai(format!("HTTP error: {}", e)))?;
 
-        let data: serde_json::Value = res.json().await.map_err(|e| VibError::Ai(format!("JSON parsing error: {}", e)))?;
-        
+        let data: serde_json::Value = res
+            .json()
+            .await
+            .map_err(|e| CntrlError::Ai(format!("JSON parsing error: {}", e)))?;
+
         let mut models = Vec::new();
         if let Some(arr) = data["data"].as_array() {
             for item in arr {

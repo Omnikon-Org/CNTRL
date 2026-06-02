@@ -3,10 +3,10 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
-use tauri::{AppHandle, Manager, Emitter, WebviewBuilder, WebviewUrl};
+use tauri::{Emitter, Manager, WebviewBuilder, WebviewUrl};
 use uuid::Uuid;
 
-use crate::error::VibError;
+use crate::error::CntrlError;
 
 const CHROME_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -46,10 +46,15 @@ impl BrowserService {
         }
     }
 
-    pub fn open_tab(&self, app: &AppHandle, url: String, is_background: bool) -> Result<Uuid, VibError> {
+    pub fn open_tab<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        url: String,
+        is_background: bool,
+    ) -> Result<Uuid, CntrlError> {
         let id = Uuid::new_v4();
         let label = format!("tab-{}", id);
-        
+
         let tab = Tab {
             id,
             url: url.clone(),
@@ -62,8 +67,10 @@ impl BrowserService {
         };
 
         if let Some(main_window) = app.get_window("main") {
-            let parsed_url = url.parse().unwrap_or_else(|_| "about:blank".parse().unwrap());
-            
+            let parsed_url = url
+                .parse()
+                .unwrap_or_else(|_| "about:blank".parse().unwrap());
+
             // Initialization scripts for Fix 2
             let init_script = r#"
                 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -85,7 +92,7 @@ impl BrowserService {
                     let mut state = state_clone.write();
                     if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id_clone) {
                         t.loaded = true;
-                        
+
                         let webview_clone = webview.clone();
                         tauri::async_runtime::spawn(async move {
                             tokio::time::sleep(Duration::from_millis(1000)).await;
@@ -116,7 +123,7 @@ impl BrowserService {
 
             // Spawn 10s timeout to trigger fallback
             let url_clone = url.clone();
-            if !url_clone.starts_with("vibe://") && url_clone != "about:blank" {
+            if !url_clone.starts_with("cntrl://") && url_clone != "about:blank" {
                 let state_clone2 = self.state.clone();
                 let app_clone = app.clone();
                 tauri::async_runtime::spawn(async move {
@@ -124,7 +131,10 @@ impl BrowserService {
                     let mut state = state_clone2.write();
                     if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id_clone) {
                         if !t.loaded {
-                            println!("Navigation timed out for {}. Triggering fallback.", url_clone);
+                            println!(
+                                "Navigation timed out for {}. Triggering fallback.",
+                                url_clone
+                            );
                             t.fallback_mode = true;
                             if let Some(w) = app_clone.get_webview(&format!("tab-{}", id_clone)) {
                                 let _ = w.hide(); // Hide native webview so iframe can show
@@ -162,7 +172,11 @@ impl BrowserService {
         Ok(id)
     }
 
-    pub fn close_tab(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+    pub fn close_tab<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        id: Uuid,
+    ) -> Result<(), CntrlError> {
         let mut state = self.state.write();
         state.tabs.retain(|t| t.id != id);
 
@@ -182,15 +196,20 @@ impl BrowserService {
         Ok(())
     }
 
-    pub fn navigate(&self, app: &AppHandle, id: Uuid, url: String) -> Result<(), VibError> {
+    pub fn navigate<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        id: Uuid,
+        url: String,
+    ) -> Result<(), CntrlError> {
         let mut state = self.state.write();
         if let Some(tab) = state.tabs.iter_mut().find(|t| t.id == id) {
             tab.url = url.clone();
             tab.fallback_mode = false; // Reset fallback
             tab.loaded = false;
-            
+
             if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
-                if url.starts_with("vibe://") {
+                if url.starts_with("cntrl://") {
                     let _ = w.hide();
                 } else if let Ok(parsed_url) = url.parse() {
                     let _ = w.navigate(parsed_url);
@@ -200,7 +219,7 @@ impl BrowserService {
 
             // Spawn timeout for navigation
             let url_clone = url.clone();
-            if !url_clone.starts_with("vibe://") && url_clone != "about:blank" {
+            if !url_clone.starts_with("cntrl://") && url_clone != "about:blank" {
                 let state_clone = self.state.clone();
                 let app_clone = app.clone();
                 tauri::async_runtime::spawn(async move {
@@ -208,7 +227,10 @@ impl BrowserService {
                     let mut state = state_clone.write();
                     if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id) {
                         if !t.loaded {
-                            println!("Navigation timed out for {}. Triggering fallback.", url_clone);
+                            println!(
+                                "Navigation timed out for {}. Triggering fallback.",
+                                url_clone
+                            );
                             t.fallback_mode = true;
                             if let Some(w) = app_clone.get_webview(&format!("tab-{}", id)) {
                                 let _ = w.hide();
@@ -223,21 +245,25 @@ impl BrowserService {
 
             Ok(())
         } else {
-            Err(VibError::Browser(format!("Tab {} not found", id)))
+            Err(CntrlError::Browser(format!("Tab {} not found", id)))
         }
     }
 
-    pub fn get_tabs(&self) -> Result<Vec<Tab>, VibError> {
+    pub fn get_tabs(&self) -> Result<Vec<Tab>, CntrlError> {
         let state = self.state.read();
         Ok(state.tabs.clone())
     }
 
-    pub fn set_active_tab(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+    pub fn set_active_tab<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        id: Uuid,
+    ) -> Result<(), CntrlError> {
         let mut state = self.state.write();
         if state.tabs.iter().any(|t| t.id == id) {
             let prev_active = state.active_tab_id;
             state.active_tab_id = Some(id);
-            
+
             if let Some(prev_id) = prev_active {
                 if prev_id != id {
                     if let Some(w) = app.get_webview(&format!("tab-{}", prev_id)) {
@@ -246,11 +272,11 @@ impl BrowserService {
                 }
             }
             if let Some(tab) = state.tabs.iter().find(|t| t.id == id) {
-                if !tab.url.starts_with("vibe://") && !tab.fallback_mode {
+                if !tab.url.starts_with("cntrl://") && !tab.fallback_mode {
                     if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
                         let _ = w.show();
                     }
-                } else if tab.url.starts_with("vibe://") {
+                } else if tab.url.starts_with("cntrl://") {
                     if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
                         let _ = w.hide();
                     }
@@ -258,11 +284,18 @@ impl BrowserService {
             }
             Ok(())
         } else {
-            Err(VibError::Browser(format!("Tab {} not found", id)))
+            Err(CntrlError::Browser(format!("Tab {} not found", id)))
         }
     }
 
-    pub fn update_tab_bounds(&self, app: &AppHandle, x: f64, y: f64, width: f64, height: f64) -> Result<(), VibError> {
+    pub fn update_tab_bounds<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    ) -> Result<(), CntrlError> {
         let state = self.state.read();
         if let Some(active_id) = state.active_tab_id {
             if let Some(w) = app.get_webview(&format!("tab-{}", active_id)) {
@@ -275,28 +308,45 @@ impl BrowserService {
         Ok(())
     }
 
-    pub fn go_back(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+    pub fn go_back<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        id: Uuid,
+    ) -> Result<(), CntrlError> {
         if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
             let _ = w.eval("window.history.back()");
         }
         Ok(())
     }
 
-    pub fn go_forward(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+    pub fn go_forward<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        id: Uuid,
+    ) -> Result<(), CntrlError> {
         if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
             let _ = w.eval("window.history.forward()");
         }
         Ok(())
     }
 
-    pub fn reload(&self, app: &AppHandle, id: Uuid) -> Result<(), VibError> {
+    pub fn reload<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        id: Uuid,
+    ) -> Result<(), CntrlError> {
         if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
             let _ = w.eval("window.location.reload()");
         }
         Ok(())
     }
 
-    pub fn update_metadata(&self, id: Uuid, title: String, favicon: String) -> Result<(), VibError> {
+    pub fn update_metadata(
+        &self,
+        id: Uuid,
+        title: String,
+        favicon: String,
+    ) -> Result<(), CntrlError> {
         let mut state = self.state.write();
         if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id) {
             if !title.is_empty() {

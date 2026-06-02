@@ -1,10 +1,10 @@
-//! Global Error Types for Vibe Browser
+//! Global Error Types for CNTRL Browser
 
 use thiserror::Error;
 
 /// Core error type used across the application.
 #[derive(Debug, Error)]
-pub enum VibError {
+pub enum CntrlError {
     #[error("Configuration Error: {0}")]
     Config(String),
 

@@ -1,8 +1,8 @@
-# Vibe Browser
+# CNTRL Browser
 
 **Intent-based autonomous browsing**
 
-Vibe Browser is a lightweight, AI-driven autonomous browser built with Tauri (Rust backend) and SolidJS (TypeScript frontend). It is designed to interpret natural language intents and execute them autonomously across the web.
+CNTRL Browser is a lightweight, AI-driven autonomous browser built with Tauri (Rust backend) and SolidJS (TypeScript frontend). It is designed to interpret natural language intents and execute them autonomously across the web.
 
 ## Architecture Overview
 - **Runtime**: Tauri v2

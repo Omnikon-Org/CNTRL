@@ -1,34 +1,40 @@
 use std::fs::OpenOptions;
 use std::io::Write;
-use tauri_plugin_shell::ShellExt;
-use tauri_plugin_shell::process::CommandEvent;
+use tauri::Manager;
 
-use crate::error::VibError;
+use crate::error::CntrlError;
 
-pub async fn fetch_fallback_html(app: &tauri::AppHandle, url: &str) -> Result<String, VibError> {
-    log_fallback(url)?;
+pub async fn fetch_fallback_html<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    url: &str,
+) -> Result<String, CntrlError> {
+    let fallback_path = app
+        .path()
+        .resource_dir()
+        .map(|p| p.join("fallback.mjs"))
+        .unwrap_or_else(|_| std::path::PathBuf::from("fallback.mjs"));
 
-    let (mut rx, _child) = app
-        .shell()
-        .command("node")
-        .args(["fallback.mjs", url])
-        .spawn()
-        .map_err(|e| VibError::Browser(format!("Failed to spawn fallback: {}", e)))?;
+    let _ = log_fallback(url);
 
-    let mut output = String::new();
-    while let Some(event) = rx.recv().await {
-        if let CommandEvent::Stdout(line) = event {
-            output.push_str(&String::from_utf8_lossy(&line));
-        } else if let CommandEvent::Stderr(line) = event {
-            eprintln!("Fallback error: {}", String::from_utf8_lossy(&line));
-        }
+    let output = std::process::Command::new("node")
+        .arg(fallback_path)
+        .arg(url)
+        .output()
+        .map_err(|e| CntrlError::Browser(format!("Failed to spawn fallback: {}", e)))?;
+
+    if !output.status.success() {
+        let err = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(CntrlError::Browser(format!(
+            "Fallback script error: {}",
+            err
+        )));
     }
 
-    Ok(output)
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
 
-fn log_fallback(url: &str) -> Result<(), VibError> {
-    let log_path = std::env::temp_dir().join("vibe-fallback.log");
+fn log_fallback(url: &str) -> Result<(), CntrlError> {
+    let log_path = std::env::temp_dir().join("cntrl-fallback.log");
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)
