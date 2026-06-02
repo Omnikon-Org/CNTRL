@@ -1,6 +1,6 @@
-# Vibe Browser
+# CNTRL Browser
 
-Vibe Browser is an experimental desktop browser for intent-based autonomous browsing. It combines a Tauri v2 Rust backend with a SolidJS frontend, native child webviews, compatibility fallback rendering, and a configurable AI router for local and cloud model providers.
+CNTRL Browser is an experimental desktop browser for intent-based autonomous browsing. It combines a Tauri v2 Rust backend with a SolidJS frontend, native child webviews, compatibility fallback rendering, and a configurable AI router for local and cloud model providers.
 
 The project is currently an early-stage prototype. It already includes browser chrome, tab management, native webview navigation, fallback HTML rendering, AI model configuration, and intent-tier scoring. Natural-language command execution, persistent memory, background agents, and a plugin SDK are planned but not complete.
 
