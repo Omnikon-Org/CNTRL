@@ -1,0 +1,8 @@
+name: Stale Assignment Check
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+jobs:
+  check:
+    uses: Demon-Die/.github/.github/workflows/stale-assignment-check.yml@main
