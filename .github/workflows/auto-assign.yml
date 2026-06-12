@@ -1,0 +1,7 @@
+name: Auto Assign Issue
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  assign:
+    uses: Demon-Die/.github/.github/workflows/auto-assign-issue.yml@main
