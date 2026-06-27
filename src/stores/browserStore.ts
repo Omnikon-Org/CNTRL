@@ -25,8 +25,13 @@ export const browserActions = {
   async fetchTabs() {
     const tabs: Tab[] = await invoke('get_tabs');
     setBrowserState('tabs', tabs);
-    if (!browserState.activeTabId && tabs.length > 0) {
-      setBrowserState('activeTabId', tabs[0]?.id || null);
+    if (tabs.length > 0) {
+      const activeExists = tabs.some(t => t.id === browserState.activeTabId);
+      if (!activeExists) {
+        setBrowserState('activeTabId', tabs[tabs.length - 1]?.id || null);
+      }
+    } else {
+      setBrowserState('activeTabId', null);
     }
   },
 
@@ -42,6 +47,9 @@ export const browserActions = {
   async closeTab(id: string) {
     await invoke('close_tab', { id });
     await this.fetchTabs();
+    if (browserState.tabs.length === 0) {
+      await this.openTab('about:blank');
+    }
   },
 
   async navigate(id: string, url: string) {
