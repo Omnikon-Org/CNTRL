@@ -36,7 +36,7 @@ pub async fn execute_steps(
                 if let Some(ref id) = active_tab_id {
                     browser.navigate(app, id.clone(), url.clone())?;
                 } else {
-                    active_tab_id = Some(browser.open_tab(app, url.clone(), false)?);
+                    active_tab_id = Some(browser.open_tab(app, url.clone(), false, 0.0, 0.0, 800.0, 600.0)?);
                 }
             }
             Step::WaitFor(ms) => {
