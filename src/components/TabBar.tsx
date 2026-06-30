@@ -9,7 +9,7 @@ import { WindowControls } from './WindowControls';
 import './TabBar.css';
 
 export const TabBar: Component = () => {
-  const [isMacOS, setIsMacOS] = createSignal(navigator.userAgent.includes('Mac OS'));
+  const [isMacOS, setIsMacOS] = createSignal(navigator.userAgent.includes('Mac OS') || navigator.userAgent.includes('Macintosh'));
   const [isWindows, setIsWindows] = createSignal(navigator.userAgent.includes('Win'));
   const [closingTabId, setClosingTabId] = createSignal<string | null>(null);
 
@@ -29,7 +29,7 @@ export const TabBar: Component = () => {
     <div 
       class="tab-bar" 
       data-tauri-drag-region 
-      style={isMacOS() ? { 'padding-left': '80px' } : {}}
+      style={isMacOS() ? { paddingLeft: '80px' } : {}}
     >
       <For each={browserState.tabs.filter(t => !t.is_background)}>
         {(tab) => (

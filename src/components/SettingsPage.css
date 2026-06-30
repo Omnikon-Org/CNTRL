@@ -76,6 +76,10 @@
   outline: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 44px;
+  line-height: 1.2;
 }
 
 .form-group input:focus,
@@ -103,6 +107,9 @@
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3);
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 44px;
 }
 
 .save-btn:hover {
@@ -121,6 +128,9 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 40px;
 }
 
 .test-btn:hover:not(:disabled) {

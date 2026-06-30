@@ -114,7 +114,7 @@ impl BrowserService {
             if let Ok(webview) = main_window.add_child(
                 builder,
                 tauri::LogicalPosition::new(0, 0),
-                tauri::LogicalSize::new(0, 0),
+                tauri::LogicalSize::new(800, 600),
             ) {
                 if is_background {
                     let _ = webview.hide();
