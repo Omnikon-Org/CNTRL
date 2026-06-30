@@ -71,6 +71,9 @@ export const browserActions = {
   async setActiveTab(id: string) {
     await invoke('set_active_tab', { id });
     setBrowserState('activeTabId', id);
+    // Push bounds to the newly-shown tab
+    const { x, y, width, height } = browserState.bounds;
+    await invoke('update_tab_bounds', { x, y, width, height }).catch(console.error);
   },
 
   async fetchFallback(url: string) {

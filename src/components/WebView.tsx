@@ -8,6 +8,10 @@ import { browserState, browserActions, setBrowserState } from '../stores/browser
 import { SettingsPage } from './SettingsPage';
 import './WebView.css';
 
+/** Signal that resolves when the webview container has been measured */
+const [boundsReady, setBoundsReady] = createSignal(false);
+export { boundsReady };
+
 export const WebView: Component = () => {
   const [htmlContent, setHtmlContent] = createSignal('');
   const [isLoading, setIsLoading] = createSignal(false);
@@ -15,23 +19,25 @@ export const WebView: Component = () => {
   // eslint-disable-next-line no-unassigned-vars
   let containerRef: HTMLDivElement | undefined;
   let resizeObserver: ResizeObserver | undefined;
+  let boundsInterval: ReturnType<typeof setInterval> | undefined;
 
   const updateBounds = () => {
     if (containerRef) {
-      requestAnimationFrame(() => {
-        if (!containerRef) return;
-        const rect = containerRef.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
-        
-        setBrowserState('bounds', { x: rect.x, y: rect.y, width: rect.width, height: rect.height });
-        
-        invoke('update_tab_bounds', {
-          x: rect.x,
-          y: rect.y,
-          width: rect.width,
-          height: rect.height,
-        }).catch(console.error);
-      });
+      const rect = containerRef.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      
+      setBrowserState('bounds', { x: rect.x, y: rect.y, width: rect.width, height: rect.height });
+      
+      if (!boundsReady()) {
+        setBoundsReady(true);
+      }
+
+      invoke('update_tab_bounds', {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      }).catch(console.error);
     }
   };
 
@@ -41,13 +47,17 @@ export const WebView: Component = () => {
         updateBounds();
       });
       resizeObserver.observe(containerRef);
+      // Initial measurement
       updateBounds();
+      // Safety net: poll every 500ms to catch any missed resizes
+      boundsInterval = setInterval(updateBounds, 500);
     }
     window.addEventListener('resize', updateBounds);
   });
 
   onCleanup(() => {
     if (resizeObserver) resizeObserver.disconnect();
+    if (boundsInterval) clearInterval(boundsInterval);
     window.removeEventListener('resize', updateBounds);
   });
 
