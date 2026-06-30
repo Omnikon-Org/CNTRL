@@ -7,11 +7,15 @@ use crate::services::browser::{BrowserService, Tab};
 pub fn open_tab(
     url: String,
     is_background: bool,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
     app: tauri::AppHandle,
     browser_service: State<'_, BrowserService>,
 ) -> Result<Uuid, String> {
     browser_service
-        .open_tab(&app, url, is_background)
+        .open_tab(&app, url, is_background, x, y, width, height)
         .map_err(|e| e.to_string())
 }
 
@@ -41,6 +45,11 @@ pub fn navigate(
 #[tauri::command]
 pub fn get_tabs(browser_service: State<'_, BrowserService>) -> Result<Vec<Tab>, String> {
     browser_service.get_tabs().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_active_tab_id(browser_service: State<'_, BrowserService>) -> Result<Option<Uuid>, String> {
+    browser_service.get_active_tab_id().map_err(|e| e.to_string())
 }
 
 #[tauri::command]

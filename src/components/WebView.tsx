@@ -4,7 +4,7 @@
  */
 import { Component, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
-import { browserState, browserActions } from '../stores/browserStore';
+import { browserState, browserActions, setBrowserState } from '../stores/browserStore';
 import { SettingsPage } from './SettingsPage';
 import './WebView.css';
 
@@ -22,6 +22,8 @@ export const WebView: Component = () => {
         if (!containerRef) return;
         const rect = containerRef.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
+        
+        setBrowserState('bounds', { x: rect.x, y: rect.y, width: rect.width, height: rect.height });
         
         invoke('update_tab_bounds', {
           x: rect.x,

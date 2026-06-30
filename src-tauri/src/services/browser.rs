@@ -51,6 +51,10 @@ impl BrowserService {
         app: &tauri::AppHandle<R>,
         url: String,
         is_background: bool,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
     ) -> Result<Uuid, CntrlError> {
         let id = Uuid::new_v4();
         let label = format!("tab-{}", id);
@@ -113,8 +117,8 @@ impl BrowserService {
 
             if let Ok(webview) = main_window.add_child(
                 builder,
-                tauri::LogicalPosition::new(0, 0),
-                tauri::LogicalSize::new(800, 600),
+                tauri::LogicalPosition::new(x, y),
+                tauri::LogicalSize::new(width.max(1.0), height.max(1.0)),
             ) {
                 if is_background {
                     let _ = webview.hide();
@@ -252,6 +256,11 @@ impl BrowserService {
     pub fn get_tabs(&self) -> Result<Vec<Tab>, CntrlError> {
         let state = self.state.read();
         Ok(state.tabs.clone())
+    }
+
+    pub fn get_active_tab_id(&self) -> Result<Option<Uuid>, CntrlError> {
+        let state = self.state.read();
+        Ok(state.active_tab_id)
     }
 
     pub fn set_active_tab<R: tauri::Runtime>(

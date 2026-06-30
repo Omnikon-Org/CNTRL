@@ -11,9 +11,16 @@ export interface Tab {
   fallback_mode: boolean;
 }
 
-export const [browserState, setBrowserState] = createStore({
-  tabs: [] as Tab[],
-  activeTabId: null as string | null,
+export interface BrowserState {
+  tabs: Tab[];
+  activeTabId: string | null;
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
+export const [browserState, setBrowserState] = createStore<BrowserState>({
+  tabs: [],
+  activeTabId: null,
+  bounds: { x: 0, y: 0, width: 800, height: 600 },
 });
 
 import { listen } from '@tauri-apps/api/event';
@@ -25,7 +32,10 @@ export const browserActions = {
   async fetchTabs() {
     const tabs: Tab[] = await invoke('get_tabs');
     setBrowserState('tabs', tabs);
-    if (tabs.length > 0) {
+    const activeTabId: string | null = await invoke('get_active_tab_id');
+    if (activeTabId) {
+      setBrowserState('activeTabId', activeTabId);
+    } else if (tabs.length > 0) {
       const activeExists = tabs.some(t => t.id === browserState.activeTabId);
       if (!activeExists) {
         setBrowserState('activeTabId', tabs[tabs.length - 1]?.id || null);
@@ -36,10 +46,11 @@ export const browserActions = {
   },
 
   async openTab(url: string = 'about:blank', isBackground: boolean = false) {
-    const id: string = await invoke('open_tab', { url, isBackground });
+    const { x, y, width, height } = browserState.bounds;
+    const id: string = await invoke('open_tab', { url, isBackground, x, y, width, height });
     await this.fetchTabs();
     if (!isBackground) {
-      setBrowserState('activeTabId', id);
+      await this.setActiveTab(id);
     }
     return id;
   },

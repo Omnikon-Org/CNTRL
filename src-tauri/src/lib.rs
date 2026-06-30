@@ -56,6 +56,7 @@ pub fn run() {
             commands::browser::close_tab,
             commands::browser::navigate,
             commands::browser::get_tabs,
+            commands::browser::get_active_tab_id,
             commands::browser::set_active_tab,
             commands::browser::fetch_fallback,
             commands::browser::update_tab_bounds,
