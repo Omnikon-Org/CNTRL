@@ -1,3 +1,7 @@
+/**
+ * Navigation and URL bar component.
+ * @module UrlBar
+ */
 import { Component, createEffect, createSignal } from 'solid-js';
 import { browserState, browserActions } from '../stores/browserStore';
 import './UrlBar.css';
@@ -51,31 +55,31 @@ export const UrlBar: Component = () => {
       setInputUrl(url);
       
       if (browserState.activeTabId) {
-        browserActions.navigate(browserState.activeTabId, url);
+        void browserActions.navigate(browserState.activeTabId, url);
       } else {
-        browserActions.openTab(url);
+        void browserActions.openTab(url);
       }
     }
   };
 
   const handleOpenSettings = () => {
     if (browserState.activeTabId) {
-      browserActions.navigate(browserState.activeTabId, 'cntrl://settings');
+      void browserActions.navigate(browserState.activeTabId, 'cntrl://settings');
     } else {
-      browserActions.openTab('cntrl://settings');
+      void browserActions.openTab('cntrl://settings');
     }
   };
 
   const handleBack = () => {
-    if (browserState.activeTabId) browserActions.goBack(browserState.activeTabId);
+    if (browserState.activeTabId) void browserActions.goBack(browserState.activeTabId);
   };
 
   const handleForward = () => {
-    if (browserState.activeTabId) browserActions.goForward(browserState.activeTabId);
+    if (browserState.activeTabId) void browserActions.goForward(browserState.activeTabId);
   };
 
   const handleReload = () => {
-    if (browserState.activeTabId) browserActions.reload(browserState.activeTabId);
+    if (browserState.activeTabId) void browserActions.reload(browserState.activeTabId);
   };
 
   const isHttps = () => inputUrl().startsWith('https://');
@@ -83,7 +87,7 @@ export const UrlBar: Component = () => {
   const activeTab = () => browserState.tabs.find(t => t.id === browserState.activeTabId);
 
   return (
-    <div class="url-bar-container" style="background-color: #1a1a1c; border-top: 1px solid #333;">
+    <div class="url-bar-container">
       <div class="nav-buttons">
         <button class="nav-btn" onClick={handleBack} title="Back">
           <BackIcon />

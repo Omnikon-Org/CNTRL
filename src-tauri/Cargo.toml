@@ -31,4 +31,6 @@ tokio = { version = "1.52.1", features = ["time"] }
 reqwest = { version = "0.13.2", features = ["json"] }
 tauri-plugin-store = "2.4.2"
 tauri-plugin-os = "2"
+async-trait = "0.1.89"
+urlencoding = "2.1.3"
 

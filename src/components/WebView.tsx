@@ -1,3 +1,7 @@
+/**
+ * WebView component for rendering browser tabs.
+ * @module WebView
+ */
 import { Component, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { browserState, browserActions } from '../stores/browserStore';

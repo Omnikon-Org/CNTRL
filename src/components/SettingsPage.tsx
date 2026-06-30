@@ -1,3 +1,7 @@
+/**
+ * Settings page component for configuring AI providers and testing the router.
+ * @module SettingsPage
+ */
 import { Component, createSignal, onMount, createEffect } from "solid-js";
 import { aiState, updateAiConfig, ModelTier, askAi, getHfModels, getOpenRouterFreeModels, testIntentRouter } from "../stores/aiStore";
 import "./SettingsPage.css";
@@ -30,7 +34,7 @@ export const SettingsPage: Component = () => {
     const currentTier = tier();
     if (currentTier === "Freemium") {
       setIsLoadingModels(true);
-      getOpenRouterFreeModels().then((res) => {
+      void getOpenRouterFreeModels().then((res) => {
         setModels(res);
         const firstModel = res[0];
         if (firstModel !== undefined && !res.includes(selectedModel())) {
@@ -40,7 +44,7 @@ export const SettingsPage: Component = () => {
       });
     } else if (currentTier === "Premium") {
       setIsLoadingModels(true);
-      getHfModels().then((res) => {
+      void getHfModels().then((res) => {
         setModels(res);
         const firstModel = res[0];
         if (firstModel !== undefined && !res.includes(selectedModel())) {
@@ -73,8 +77,8 @@ export const SettingsPage: Component = () => {
     try {
       const response = await askAi(testPrompt());
       setTestResponse(response);
-    } catch (err: any) {
-      setTestResponse(`Error: ${err}`);
+    } catch (err: unknown) {
+      setTestResponse(`Error: ${String(err)}`);
     } finally {
       setIsTesting(false);
     }
@@ -109,7 +113,7 @@ export const SettingsPage: Component = () => {
     <div class="settings-page">
       <div class="settings-container">
         <h1>CNTRL Settings</h1>
-        <form onSubmit={handleSave}>
+        <form onSubmit={(e) => void handleSave(e)}>
           <div class="form-group">
             <label>AI Tier</label>
             <select
@@ -187,7 +191,7 @@ export const SettingsPage: Component = () => {
               placeholder="Ask the AI a question..."
             />
           </div>
-          <button class="test-btn" onClick={handleTestAi} disabled={isTesting()}>
+          <button class="test-btn" onClick={() => void handleTestAi()} disabled={isTesting()}>
             {isTesting() ? "Testing..." : "Test AI"}
           </button>
           {testResponse() && (
@@ -203,7 +207,7 @@ export const SettingsPage: Component = () => {
         <div class="test-ai-section">
           <h2>Test Intent Router</h2>
           <p class="description">Run 10 sample intents through the AI router scoring logic.</p>
-          <button class="test-btn" onClick={handleTestIntents} disabled={isScoring()}>
+          <button class="test-btn" onClick={() => void handleTestIntents()} disabled={isScoring()}>
             {isScoring() ? "Scoring..." : "Run Intent Test"}
           </button>
           {intentScores().length > 0 && (

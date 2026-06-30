@@ -31,12 +31,15 @@ jobs:
       run: npm ci
 
     - name: Rust Clippy
+      working-directory: src-tauri
       run: cargo clippy --all-targets --all-features -- -D warnings
 
     - name: Rust Tests
+      working-directory: src-tauri
       run: cargo test --all
 
     - name: Rust Format
+      working-directory: src-tauri
       run: cargo fmt --check
 
     - name: TypeScript Check

@@ -17,8 +17,8 @@ export const [browserState, setBrowserState] = createStore({
 });
 
 import { listen } from '@tauri-apps/api/event';
-listen('tabs-updated', () => {
-  browserActions.fetchTabs();
+void listen('tabs-updated', () => {
+  void browserActions.fetchTabs();
 });
 
 export const browserActions = {

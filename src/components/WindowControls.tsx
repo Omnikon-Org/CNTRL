@@ -12,24 +12,24 @@ export function WindowControls() {
     <div class="window-controls">
       <button
         class="wc-btn wc-minimize"
-        onClick={() => appWindow.minimize()}
+        onClick={() => void appWindow.minimize()}
         aria-label="Minimize"
       >─</button>
       <button
         class="wc-btn wc-maximize"
-        onClick={async () => {
+        onClick={() => void (async () => {
           const maximized = await appWindow.isMaximized();
           if (maximized) {
             await appWindow.unmaximize();
           } else {
             await appWindow.maximize();
           }
-        }}
+        })()}
         aria-label="Maximize"
       >□</button>
       <button
         class="wc-btn wc-close"
-        onClick={() => appWindow.close()}
+        onClick={() => void appWindow.close()}
         aria-label="Close"
       >✕</button>
     </div>

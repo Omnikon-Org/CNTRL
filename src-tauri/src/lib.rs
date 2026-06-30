@@ -5,7 +5,7 @@ pub mod commands;
 pub mod error;
 pub mod services;
 
-use services::ai_router::AiRouter;
+use services::ai::router::AiRouter;
 use services::browser::BrowserService;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,10 +20,10 @@ pub fn run() {
                 .path()
                 .app_data_dir()
                 .unwrap_or_else(|_| PathBuf::from("."));
-            let key_path = app_data.join(".cntrl_key");
+
 
             app.manage(BrowserService::new());
-            app.manage(AiRouter::new(key_path));
+            app.manage(AiRouter::new());
 
             let browser_service = app.state::<BrowserService>();
             let handle = app.handle().clone();
@@ -68,6 +68,7 @@ pub fn run() {
             commands::ai::get_hf_models,
             commands::ai::get_openrouter_free_models,
             commands::ai::test_intent_router,
+            commands::intent::execute_intent,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

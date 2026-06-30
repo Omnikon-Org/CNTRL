@@ -31,7 +31,7 @@ vi.mock('@tauri-apps/plugin-os', () => ({
 beforeAll(() => {
   Object.defineProperty(window, '__TAURI_INTERNALS__', {
     value: {
-      invoke: (cmd: string, _args: any) => {
+      invoke: (cmd: string, _args: unknown) => {
         if (cmd === 'get_tabs') return Promise.resolve([]);
         return Promise.resolve();
       }

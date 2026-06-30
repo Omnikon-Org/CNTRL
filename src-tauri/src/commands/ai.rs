@@ -1,18 +1,20 @@
-use crate::services::ai_router::{AiRouter, ModelConfig};
+use crate::services::ai::router::{AiRouter, AiConfig};
 use tauri::State;
 
 #[tauri::command]
 pub async fn ask_ai(prompt: String, ai_router: State<'_, AiRouter>) -> Result<String, String> {
-    ai_router.ask_model(prompt).await.map_err(|e| e.to_string())
+    ai_router.ask(prompt).await.map_err(|e| e.to_string())
+}
+
+use crate::services::ai::router::AiConfigMasked;
+
+#[tauri::command]
+pub fn get_ai_config(ai_router: State<'_, AiRouter>) -> Result<AiConfigMasked, String> {
+    Ok(ai_router.get_config_masked())
 }
 
 #[tauri::command]
-pub fn get_ai_config(ai_router: State<'_, AiRouter>) -> Result<ModelConfig, String> {
-    Ok(ai_router.get_config())
-}
-
-#[tauri::command]
-pub fn update_ai_config(config: ModelConfig, ai_router: State<'_, AiRouter>) -> Result<(), String> {
+pub fn update_ai_config(config: AiConfig, ai_router: State<'_, AiRouter>) -> Result<(), String> {
     ai_router.update_config(config);
     Ok(())
 }
@@ -37,9 +39,9 @@ pub fn test_intent_router(
     intents: Vec<String>,
     ai_router: State<'_, AiRouter>,
 ) -> Result<Vec<(String, String)>, String> {
-    let scores = ai_router.score_sample_intents(intents);
+    let scores = AiRouter::score_sample_intents(intents);
     Ok(scores
         .into_iter()
-        .map(|(intent, tier)| (intent, format!("{:?}", tier)))
+        .map(|(intent, tier, _score)| (intent, format!("{:?}", tier)))
         .collect())
 }
