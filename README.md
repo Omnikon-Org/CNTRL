@@ -7,7 +7,7 @@ CNTRL Browser is a lightweight, AI-driven autonomous browser built with Tauri (R
 ## Architecture Overview
 - **Runtime**: Tauri v2
 - **Backend**: Rust (Business logic, SQLite memory, OS Keychain, AI router, OS webview fallback)
-- **Frontend**: SolidJS + TypeScript (State: Zustand/Solid stores, Styling: CSS custom properties)
+- **Frontend**: SolidJS + TypeScript (State: Solid stores, Styling: CSS custom properties)
 - **AI Tiers**:
   - Tier 1 (Local): Ollama
   - Tier 2 (Freemium): Gemini Flash, Groq, Hugging Face

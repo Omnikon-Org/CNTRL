@@ -1,5 +1,5 @@
-import { createStore } from 'solid-js/store';
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
+import { createStore } from "solid-js/store";
 
 export interface Tab {
   id: string;
@@ -9,6 +9,7 @@ export interface Tab {
   is_background: boolean;
   created_at: string;
   fallback_mode: boolean;
+  loaded: boolean;
 }
 
 export const [browserState, setBrowserState] = createStore({
@@ -16,65 +17,66 @@ export const [browserState, setBrowserState] = createStore({
   activeTabId: null as string | null,
 });
 
-import { listen } from '@tauri-apps/api/event';
-listen('tabs-updated', () => {
+import { listen } from "@tauri-apps/api/event";
+
+listen("tabs-updated", () => {
   browserActions.fetchTabs();
 });
 
 export const browserActions = {
   async fetchTabs() {
-    const tabs: Tab[] = await invoke('get_tabs');
-    setBrowserState('tabs', tabs);
+    const tabs: Tab[] = await invoke("get_tabs");
+    setBrowserState("tabs", tabs);
     if (tabs.length > 0) {
-      const activeExists = tabs.some(t => t.id === browserState.activeTabId);
+      const activeExists = tabs.some((t) => t.id === browserState.activeTabId);
       if (!activeExists) {
-        setBrowserState('activeTabId', tabs[tabs.length - 1]?.id || null);
+        setBrowserState("activeTabId", tabs[tabs.length - 1]?.id || null);
       }
     } else {
-      setBrowserState('activeTabId', null);
+      setBrowserState("activeTabId", null);
     }
   },
 
-  async openTab(url: string = 'about:blank', isBackground: boolean = false) {
-    const id: string = await invoke('open_tab', { url, isBackground });
+  async openTab(url: string = "about:blank", isBackground: boolean = false) {
+    const id: string = await invoke("open_tab", { url, isBackground });
     await this.fetchTabs();
     if (!isBackground) {
-      setBrowserState('activeTabId', id);
+      setBrowserState("activeTabId", id);
     }
     return id;
   },
 
   async closeTab(id: string) {
-    await invoke('close_tab', { id });
+    await invoke("close_tab", { id });
     await this.fetchTabs();
     if (browserState.tabs.length === 0) {
-      await this.openTab('about:blank');
+      await this.openTab("about:blank");
     }
   },
 
   async navigate(id: string, url: string) {
-    await invoke('navigate', { id, url });
+    await invoke("navigate", { id, url });
     await this.fetchTabs();
   },
 
   async setActiveTab(id: string) {
-    await invoke('set_active_tab', { id });
-    setBrowserState('activeTabId', id);
+    await invoke("set_active_tab", { id });
+    setBrowserState("activeTabId", id);
   },
 
   async fetchFallback(url: string) {
-    return await invoke<string>('fetch_fallback', { url });
+    return await invoke<string>("fetch_fallback", { url });
   },
-  
+
   async goBack(id: string) {
-    await invoke('go_back', { id });
+    await invoke("go_back", { id });
   },
 
   async goForward(id: string) {
-    await invoke('go_forward', { id });
+    await invoke("go_forward", { id });
   },
 
   async reload(id: string) {
-    await invoke('reload', { id });
-  }
+    await invoke("reload", { id });
+  },
 };

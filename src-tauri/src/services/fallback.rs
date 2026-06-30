@@ -1,36 +1,42 @@
 use std::fs::OpenOptions;
 use std::io::Write;
-use tauri::Manager;
 
 use crate::error::CntrlError;
 
+const FALLBACK_USER_AGENT: &str =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
 pub async fn fetch_fallback_html<R: tauri::Runtime>(
-    app: &tauri::AppHandle<R>,
+    _app: &tauri::AppHandle<R>,
     url: &str,
 ) -> Result<String, CntrlError> {
-    let fallback_path = app
-        .path()
-        .resource_dir()
-        .map(|p| p.join("fallback.mjs"))
-        .unwrap_or_else(|_| std::path::PathBuf::from("fallback.mjs"));
-
     let _ = log_fallback(url);
 
-    let output = std::process::Command::new("node")
-        .arg(fallback_path)
-        .arg(url)
-        .output()
-        .map_err(|e| CntrlError::Browser(format!("Failed to spawn fallback: {}", e)))?;
+    let client = reqwest::Client::builder()
+        .user_agent(FALLBACK_USER_AGENT)
+        .build()
+        .map_err(|e| CntrlError::Browser(format!("Failed to build HTTP client: {}", e)))?;
 
-    if !output.status.success() {
-        let err = String::from_utf8_lossy(&output.stderr).to_string();
+    let response = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| CntrlError::Browser(format!("Failed to fetch URL: {}", e)))?;
+
+    if !response.status().is_success() {
         return Err(CntrlError::Browser(format!(
-            "Fallback script error: {}",
-            err
+            "HTTP {} for {}",
+            response.status(),
+            url
         )));
     }
 
-    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    let html = response
+        .text()
+        .await
+        .map_err(|e| CntrlError::Browser(format!("Failed to read response body: {}", e)))?;
+
+    Ok(html)
 }
 
 fn log_fallback(url: &str) -> Result<(), CntrlError> {

@@ -1,14 +1,13 @@
-import { Component, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
-import { browserState, browserActions } from '../stores/browserStore';
-import { SettingsPage } from './SettingsPage';
-import './WebView.css';
+import { invoke } from "@tauri-apps/api/core";
+import { Component, createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { browserActions, browserState } from "../stores/browserStore";
+import { SettingsPage } from "./SettingsPage";
+import "./WebView.css";
 
 export const WebView: Component = () => {
-  const [htmlContent, setHtmlContent] = createSignal('');
+  const [htmlContent, setHtmlContent] = createSignal("");
   const [isLoading, setIsLoading] = createSignal(false);
-  const [error, setError] = createSignal('');
-  // eslint-disable-next-line no-unassigned-vars
+  const [error, setError] = createSignal("");
   let containerRef: HTMLDivElement | undefined;
   let resizeObserver: ResizeObserver | undefined;
 
@@ -18,8 +17,8 @@ export const WebView: Component = () => {
         if (!containerRef) return;
         const rect = containerRef.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
-        
-        invoke('update_tab_bounds', {
+
+        invoke("update_tab_bounds", {
           x: rect.x,
           y: rect.y,
           width: rect.width,
@@ -37,46 +36,49 @@ export const WebView: Component = () => {
       resizeObserver.observe(containerRef);
       updateBounds();
     }
-    window.addEventListener('resize', updateBounds);
+    window.addEventListener("resize", updateBounds);
   });
 
   onCleanup(() => {
     if (resizeObserver) resizeObserver.disconnect();
-    window.removeEventListener('resize', updateBounds);
+    window.removeEventListener("resize", updateBounds);
   });
 
   createEffect(() => {
-    const activeTab = browserState.tabs.find(t => t.id === browserState.activeTabId);
-    updateBounds(); // Sync bounds when tab changes
+    const activeTab = browserState.tabs.find((t) => t.id === browserState.activeTabId);
+    updateBounds();
 
-    if (!activeTab || activeTab.url === 'about:blank') {
-      setHtmlContent('');
+    if (!activeTab || activeTab.url === "about:blank") {
+      setHtmlContent("");
       return;
     }
 
     if (activeTab.fallback_mode) {
       setIsLoading(true);
-      setError('');
-      browserActions.fetchFallback(activeTab.url).then(html => {
-        setHtmlContent(html);
-        setIsLoading(false);
-      }).catch(err => {
-        console.error(err);
-        setError(`Failed to load ${activeTab.url}`);
-        setIsLoading(false);
-      });
+      setError("");
+      browserActions
+        .fetchFallback(activeTab.url)
+        .then((html) => {
+          setHtmlContent(html);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setError(`Failed to load ${activeTab.url}`);
+          setIsLoading(false);
+        });
     } else {
-      setHtmlContent('');
+      setHtmlContent("");
     }
   });
 
-  const activeTab = () => browserState.tabs.find(t => t.id === browserState.activeTabId);
+  const activeTab = () => browserState.tabs.find((t) => t.id === browserState.activeTabId);
 
   return (
     <div class="webview-container" ref={containerRef}>
-      {activeTab()?.url === 'cntrl://settings' && <SettingsPage />}
-      
-      {activeTab()?.fallback_mode && activeTab()?.url !== 'cntrl://settings' && (
+      {activeTab()?.url === "cntrl://settings" && <SettingsPage />}
+
+      {activeTab()?.fallback_mode && activeTab()?.url !== "cntrl://settings" && (
         <>
           {isLoading() && <div class="loading">Loading compatibility mode...</div>}
           {error() && <div class="error">{error()}</div>}
