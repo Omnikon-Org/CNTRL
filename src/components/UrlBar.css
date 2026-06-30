@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  background-color: var(--color-bg-base);
+  background-color: var(--color-bg-panel);
   border-bottom: 0.5px solid var(--color-border);
   gap: 12px;
   min-height: 48px;
@@ -15,33 +15,33 @@
 }
 
 .nav-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
+  background: transparent;
+  border: 0.5px solid var(--color-border);
   cursor: pointer;
   padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
+  transition:
+    border-color 120ms ease-out,
+    color 120ms ease-out;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
 }
 
 .nav-btn:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
+  border-color: var(--color-border-active);
 }
 
-.nav-btn:active {
-  transform: scale(0.95);
-}
-
-.nav-btn svg, .settings-icon-btn svg {
+.nav-btn svg,
+.settings-icon-btn svg {
   color: var(--color-text-secondary);
-  transition: color 0.2s;
+  transition: color 120ms ease-out;
 }
 
-.nav-btn:hover svg, .settings-icon-btn:hover svg {
+.nav-btn:hover svg,
+.settings-icon-btn:hover svg {
   color: var(--color-text-primary);
 }
 
@@ -53,16 +53,19 @@
   border: 0.5px solid var(--color-border);
   border-radius: 4px;
   padding: 0 8px;
-  height: 32px;
+  height: 28px;
+  transition: border-color 120ms ease-out;
 }
 
 .url-bar:focus-within {
-  border-color: var(--color-accent);
+  border: 1px solid var(--color-accent);
 }
 
 .icon {
   margin-right: 8px;
   font-size: 14px;
+  display: flex;
+  align-items: center;
 }
 
 .url-input {
@@ -79,20 +82,31 @@
   color: var(--color-text-secondary);
 }
 
+.fallback-badge {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  margin-left: 8px;
+  font-weight: bold;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .settings-icon-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
+  background: transparent;
+  border: 0.5px solid var(--color-border);
   cursor: pointer;
-  padding: 4px 8px;
+  width: 28px;
+  height: 28px;
   margin-left: 8px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: border-color 120ms ease-out;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .settings-icon-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-border-active);
 }

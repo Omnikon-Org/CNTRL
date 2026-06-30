@@ -1,18 +1,35 @@
-import { onMount } from 'solid-js';
-import { browserState, browserActions } from './stores/browserStore';
-import { initAiStore } from './stores/aiStore';
-import { TabBar } from './components/TabBar';
-import { UrlBar } from './components/UrlBar';
-import { WebView } from './components/WebView';
-import './App.css';
+import { onCleanup, onMount } from "solid-js";
+import { TabBar } from "./components/TabBar";
+import { UrlBar } from "./components/UrlBar";
+import { WebView } from "./components/WebView";
+import { initAiStore } from "./stores/aiStore";
+import { browserActions, browserState } from "./stores/browserStore";
+import "./App.css";
 
 function App() {
   onMount(async () => {
     await initAiStore();
     await browserActions.fetchTabs();
     if (browserState.tabs.length === 0) {
-      await browserActions.openTab('https://google.com');
+      await browserActions.openTab("https://google.com");
     }
+
+    const handler = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+
+      if (e.key === "t") {
+        e.preventDefault();
+        browserActions.openTab("about:blank");
+      } else if (e.key === "w") {
+        e.preventDefault();
+        if (browserState.activeTabId) {
+          browserActions.closeTab(browserState.activeTabId);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    onCleanup(() => window.removeEventListener("keydown", handler));
   });
 
   return (

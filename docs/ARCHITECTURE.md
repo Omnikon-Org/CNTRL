@@ -1,6 +1,6 @@
 # Architecture
 
-Vibe Browser is split into a SolidJS frontend and a Tauri v2 Rust backend. The frontend owns browser chrome and user interaction. The backend owns native webviews, tab lifecycle operations, fallback fetching, and AI-provider routing.
+CNTRL Browser is split into a SolidJS frontend and a Tauri v2 Rust backend. The frontend owns browser chrome and user interaction. The backend owns native webviews, tab lifecycle operations, fallback fetching, and AI-provider routing.
 
 ## Runtime Flow
 
@@ -96,7 +96,7 @@ The intent scoring helper is rule-based:
 The current internal page is:
 
 ```text
-vibe://settings
+cntrl://settings
 ```
 
 The URL bar navigates to this internal route, and `WebView.tsx` renders the settings component instead of showing a native child webview.
