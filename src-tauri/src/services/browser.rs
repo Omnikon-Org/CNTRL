@@ -20,6 +20,8 @@ pub struct Tab {
     pub created_at: DateTime<Utc>,
     pub fallback_mode: bool,
     pub loaded: bool,
+    #[serde(skip)]
+    pub webview: Option<tauri::Webview<tauri::Wry>>,
 }
 
 #[derive(Default)]
@@ -46,9 +48,9 @@ impl BrowserService {
         }
     }
 
-    pub fn open_tab<R: tauri::Runtime>(
+    pub fn open_tab(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         url: String,
         is_background: bool,
         x: f64,
@@ -59,7 +61,7 @@ impl BrowserService {
         let id = Uuid::new_v4();
         let label = format!("tab-{}", id);
 
-        let tab = Tab {
+        let mut tab = Tab {
             id,
             url: url.clone(),
             title: "New Tab".to_string(),
@@ -68,6 +70,7 @@ impl BrowserService {
             created_at: Utc::now(),
             fallback_mode: false,
             loaded: false,
+            webview: None,
         };
 
         if let Some(main_window) = app.get_window("main") {
@@ -125,6 +128,7 @@ impl BrowserService {
                 if is_background {
                     let _ = webview.hide();
                 }
+                tab.webview = Some(webview);
             }
 
             // Spawn 10s timeout to trigger fallback
@@ -166,35 +170,44 @@ impl BrowserService {
             state.active_tab_id = Some(id);
             // Hide previous active, show new
             if let Some(prev_id) = prev_active {
-                if let Some(w) = app.get_webview(&format!("tab-{}", prev_id)) {
-                    let _ = w.hide();
+                if let Some(t) = state.tabs.iter().find(|t| t.id == prev_id) {
+                    if let Some(w) = &t.webview {
+                        let _ = w.hide();
+                    }
                 }
             }
-            if let Some(w) = app.get_webview(&label) {
-                let _ = w.show();
+            if let Some(t) = state.tabs.iter().find(|t| t.id == id) {
+                if let Some(w) = &t.webview {
+                    let _ = w.show();
+                }
             }
         }
 
         Ok(id)
     }
 
-    pub fn close_tab<R: tauri::Runtime>(
+    pub fn close_tab(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         id: Uuid,
     ) -> Result<(), CntrlError> {
         let mut state = self.state.write();
+        let tab_to_close = state.tabs.iter().find(|t| t.id == id).cloned();
         state.tabs.retain(|t| t.id != id);
 
-        if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
-            let _ = w.close();
+        if let Some(t) = tab_to_close {
+            if let Some(w) = t.webview {
+                let _ = w.close();
+            }
         }
 
         if state.active_tab_id == Some(id) {
             state.active_tab_id = state.tabs.last().map(|t| t.id);
             if let Some(active_id) = state.active_tab_id {
-                if let Some(w) = app.get_webview(&format!("tab-{}", active_id)) {
-                    let _ = w.show();
+                if let Some(t) = state.tabs.iter().find(|t| t.id == active_id) {
+                    if let Some(w) = &t.webview {
+                        let _ = w.show();
+                    }
                 }
             }
         }
@@ -202,9 +215,9 @@ impl BrowserService {
         Ok(())
     }
 
-    pub fn navigate<R: tauri::Runtime>(
+    pub fn navigate(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         id: Uuid,
         url: String,
     ) -> Result<(), CntrlError> {
@@ -214,7 +227,7 @@ impl BrowserService {
             tab.fallback_mode = false; // Reset fallback
             tab.loaded = false;
 
-            if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+            if let Some(w) = &tab.webview {
                 if url.starts_with("cntrl://") {
                     let _ = w.hide();
                 } else if let Ok(parsed_url) = url.parse() {
@@ -238,7 +251,7 @@ impl BrowserService {
                                 url_clone
                             );
                             t.fallback_mode = true;
-                            if let Some(w) = app_clone.get_webview(&format!("tab-{}", id)) {
+                            if let Some(w) = &t.webview {
                                 let _ = w.hide();
                             }
                             let _ = app_clone.emit("tabs-updated", ());
@@ -265,9 +278,9 @@ impl BrowserService {
         Ok(state.active_tab_id)
     }
 
-    pub fn set_active_tab<R: tauri::Runtime>(
+    pub fn set_active_tab(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         id: Uuid,
     ) -> Result<(), CntrlError> {
         let mut state = self.state.write();
@@ -277,18 +290,20 @@ impl BrowserService {
 
             if let Some(prev_id) = prev_active {
                 if prev_id != id {
-                    if let Some(w) = app.get_webview(&format!("tab-{}", prev_id)) {
-                        let _ = w.hide();
+                    if let Some(t) = state.tabs.iter().find(|t| t.id == prev_id) {
+                        if let Some(w) = &t.webview {
+                            let _ = w.hide();
+                        }
                     }
                 }
             }
             if let Some(tab) = state.tabs.iter().find(|t| t.id == id) {
                 if !tab.url.starts_with("cntrl://") && !tab.fallback_mode {
-                    if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+                    if let Some(w) = &tab.webview {
                         let _ = w.show();
                     }
                 } else if tab.url.starts_with("cntrl://") {
-                    if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
+                    if let Some(w) = &tab.webview {
                         let _ = w.hide();
                     }
                 }
@@ -299,9 +314,9 @@ impl BrowserService {
         }
     }
 
-    pub fn update_tab_bounds<R: tauri::Runtime>(
+    pub fn update_tab_bounds(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         x: f64,
         y: f64,
         width: f64,
@@ -311,49 +326,63 @@ impl BrowserService {
         let scale_factor = app.get_window("main").map(|w| w.scale_factor().unwrap_or(1.0)).unwrap_or(1.0);
         
         if let Some(active_id) = state.active_tab_id {
-            if let Some(w) = app.get_webview(&format!("tab-{}", active_id)) {
-                if let Err(e) = w.set_bounds(tauri::Rect {
-                    position: tauri::Position::Physical(tauri::PhysicalPosition::new((x * scale_factor) as i32, (y * scale_factor) as i32)),
-                    size: tauri::Size::Physical(tauri::PhysicalSize::new((width * scale_factor) as u32, (height * scale_factor) as u32)),
-                }) {
-                    println!("Failed to set bounds on {}: {}", active_id, e);
+            if let Some(t) = state.tabs.iter().find(|t| t.id == active_id) {
+                if let Some(w) = &t.webview {
+                    let w_clone = w.clone();
+                    let _ = app.run_on_main_thread(move || {
+                        if let Err(e) = w_clone.set_bounds(tauri::Rect {
+                            position: tauri::Position::Physical(tauri::PhysicalPosition::new((x * scale_factor) as i32, (y * scale_factor) as i32)),
+                            size: tauri::Size::Physical(tauri::PhysicalSize::new((width * scale_factor) as u32, (height * scale_factor) as u32)),
+                        }) {
+                            println!("Failed to set bounds on {}: {}", active_id, e);
+                        }
+                    });
+                } else {
+                    println!("Webview tab-{} NOT FOUND in struct for bounds update!", active_id);
                 }
-            } else {
-                println!("Webview tab-{} NOT FOUND for bounds update!", active_id);
             }
         }
         Ok(())
     }
 
-    pub fn go_back<R: tauri::Runtime>(
+    pub fn go_back(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         id: Uuid,
     ) -> Result<(), CntrlError> {
-        if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
-            let _ = w.eval("window.history.back()");
+        let state = self.state.read();
+        if let Some(t) = state.tabs.iter().find(|t| t.id == id) {
+            if let Some(w) = &t.webview {
+                let _ = w.eval("window.history.back()");
+            }
         }
         Ok(())
     }
 
-    pub fn go_forward<R: tauri::Runtime>(
+    pub fn go_forward(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         id: Uuid,
     ) -> Result<(), CntrlError> {
-        if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
-            let _ = w.eval("window.history.forward()");
+        let state = self.state.read();
+        if let Some(t) = state.tabs.iter().find(|t| t.id == id) {
+            if let Some(w) = &t.webview {
+                let _ = w.eval("window.history.forward()");
+            }
         }
         Ok(())
     }
 
-    pub fn reload<R: tauri::Runtime>(
+    pub fn reload(
         &self,
-        app: &tauri::AppHandle<R>,
+        app: &tauri::AppHandle,
         id: Uuid,
     ) -> Result<(), CntrlError> {
-        if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
-            let _ = w.eval("window.location.reload()");
+        let state = self.state.read();
+        if let Some(t) = state.tabs.iter().find(|t| t.id == id) {
+            if let Some(w) = &t.webview {
+                let _ = w.eval("window.location.reload()");
+            }
         }
         Ok(())
     }
