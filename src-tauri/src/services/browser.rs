@@ -115,10 +115,12 @@ impl BrowserService {
                     }
                 });
 
+            let scale_factor = main_window.scale_factor().unwrap_or(1.0);
+            
             if let Ok(webview) = main_window.add_child(
                 builder,
-                tauri::LogicalPosition::new(x, y),
-                tauri::LogicalSize::new(width.max(1.0), height.max(1.0)),
+                tauri::PhysicalPosition::new((x * scale_factor) as i32, (y * scale_factor) as i32),
+                tauri::PhysicalSize::new((width.max(1.0) * scale_factor) as u32, (height.max(1.0) * scale_factor) as u32),
             ) {
                 if is_background {
                     let _ = webview.hide();
@@ -306,12 +308,18 @@ impl BrowserService {
         height: f64,
     ) -> Result<(), CntrlError> {
         let state = self.state.read();
+        let scale_factor = app.get_window("main").map(|w| w.scale_factor().unwrap_or(1.0)).unwrap_or(1.0);
+        
         if let Some(active_id) = state.active_tab_id {
             if let Some(w) = app.get_webview(&format!("tab-{}", active_id)) {
-                let _ = w.set_bounds(tauri::Rect {
-                    position: tauri::Position::Logical(tauri::LogicalPosition::new(x, y)),
-                    size: tauri::Size::Logical(tauri::LogicalSize::new(width, height)),
-                });
+                if let Err(e) = w.set_bounds(tauri::Rect {
+                    position: tauri::Position::Physical(tauri::PhysicalPosition::new((x * scale_factor) as i32, (y * scale_factor) as i32)),
+                    size: tauri::Size::Physical(tauri::PhysicalSize::new((width * scale_factor) as u32, (height * scale_factor) as u32)),
+                }) {
+                    println!("Failed to set bounds on {}: {}", active_id, e);
+                }
+            } else {
+                println!("Webview tab-{} NOT FOUND for bounds update!", active_id);
             }
         }
         Ok(())

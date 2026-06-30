@@ -20,7 +20,7 @@ export interface BrowserState {
 export const [browserState, setBrowserState] = createStore<BrowserState>({
   tabs: [],
   activeTabId: null,
-  bounds: { x: 0, y: 0, width: 800, height: 600 },
+  bounds: { x: 0, y: 78, width: 800, height: 600 },
 });
 
 import { listen } from '@tauri-apps/api/event';
