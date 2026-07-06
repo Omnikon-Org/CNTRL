@@ -83,7 +83,7 @@ Before committing, verify all checks pass locally:
 ```bash
 # Frontend
 npx tsc --noEmit
-npx eslint . --max-warnings 0
+npm run lint
 npx vitest run
 
 # Backend (Rust)
