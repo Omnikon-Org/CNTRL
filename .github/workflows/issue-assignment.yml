@@ -1,0 +1,77 @@
+name: Issue Assignment
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  auto-assign:
+    # Only run if the issue is not a PR and the comment contains '/assign'
+    if: (!context.payload.issue.pull_request) && contains(context.payload.comment.body, '/assign')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process Assignment Request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commenter = context.payload.comment.user.login;
+            const issueNum = context.payload.issue.number;
+            
+            // Check if issue is already assigned
+            if (context.payload.issue.assignees && context.payload.issue.assignees.length > 0) {
+              const currentAssignees = context.payload.issue.assignees.map(a => a.login);
+              if (currentAssignees.includes(commenter)) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNum,
+                  body: `@${commenter} You are already assigned to this issue.`
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNum,
+                  body: `@${commenter} This issue is already assigned to someone else.`
+                });
+              }
+              return;
+            }
+            
+            // Fetch all open issues assigned to the commenter in this repo
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              assignee: commenter,
+              state: 'open'
+            });
+            
+            // Issues API returns both issues and pull requests, so filter out PRs
+            const openIssues = issues.filter(issue => !issue.pull_request);
+            
+            if (openIssues.length >= 3) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNum,
+                body: `@${commenter} You have reached the maximum limit of 3 assigned issues at a time. Please complete your existing assignments before taking on new ones.`
+              });
+              return;
+            }
+            
+            // Assign the issue
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNum,
+              assignees: [commenter]
+            });
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNum,
+              body: `@${commenter} Successfully assigned to this issue! Please submit a Pull Request fixing this issue within 5 days. If a PR is not linked within 5 days, you will be automatically unassigned.`
+            });
