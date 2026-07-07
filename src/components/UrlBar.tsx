@@ -208,13 +208,13 @@ export const UrlBar: Component = () => {
   return (
     <div class="url-bar-container">
       <div class="nav-buttons">
-        <button class="nav-btn" onClick={handleBack} title="Back">
+        <button class="nav-btn" onClick={handleBack} title="Back" aria-label="Go back">
           <BackIcon />
         </button>
-        <button class="nav-btn" onClick={handleForward} title="Forward">
+        <button class="nav-btn" onClick={handleForward} title="Forward" aria-label="Go forward">
           <ForwardIcon />
         </button>
-        <button class="nav-btn" onClick={handleReload} title={isLoading() ? "Stop" : "Reload"}>
+        <button class="nav-btn" onClick={handleReload} title={isLoading() ? "Stop" : "Reload"} aria-label={isLoading() ? "Stop loading" : "Reload page"}>
           {isLoading() ? <StopIcon /> : <ReloadIcon />}
         </button>
       </div>
@@ -222,6 +222,7 @@ export const UrlBar: Component = () => {
         <span class="icon">{isHttps() ? <LockIcon /> : <AlertIcon />}</span>
         <input
           ref={inputRef}
+          aria-label="Address bar"
           type="text"
           value={inputUrl() || ""}
           onInput={(e) => setInputUrl(e.target.value)}
@@ -249,7 +250,7 @@ export const UrlBar: Component = () => {
             compat mode
           </span>
         )}
-        <button class="settings-icon-btn" onClick={handleOpenSettings} title="Settings">
+        <button class="settings-icon-btn" onClick={handleOpenSettings} title="Settings" aria-label="Open settings">
           <SettingsIcon />
         </button>
       </div>

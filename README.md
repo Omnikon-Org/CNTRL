@@ -190,6 +190,15 @@ CNTRL Browser uses a straightforward OSS branching strategy:
 
 > **All pull requests must target `main`.** The `main` branch is protected — direct pushes are not allowed; every change goes through a reviewed PR that passes CI.
 
+## Documentation
+
+Additional documentation is available in the `docs` directory.
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Open Source Checklist](docs/OPEN_SOURCE_CHECKLIST.md)
+- [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md)
+- [Accessibility Guide](docs/ACCESSIBILITY.md)
 ## Contributing
 
 We welcome contributions of all kinds — bug fixes, features, tests, and documentation improvements.
