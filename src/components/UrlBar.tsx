@@ -255,7 +255,7 @@ export const UrlBar: Component = () => {
           onKeyDown={handleKeyDown}
           onFocus={(e) => e.currentTarget.select()}
           class="url-input"
-          placeholder="Enter URL or search"
+          placeholder="Enter URL or intent… (⌘L to focus)"
           autocomplete="off"
           spellcheck={false}
           autocorrect="off"
