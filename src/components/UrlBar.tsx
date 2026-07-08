@@ -1,4 +1,4 @@
-import{ open }from "@tauri-apps/api/shell";
+import { open } from "@tauri-apps/plugin-shell";
 import { Component, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { browserActions, browserState } from "../stores/browserStore";
 import "./UrlBar.css";
@@ -185,9 +185,10 @@ export const UrlBar: Component = () => {
       browserActions.openTab("cntrl://settings");
     }
   };
-  const handleOpenExternal = () => {
-    if(activeTab()?.url){
-      open(activeTab()!.url);
+  const handleOpenExternal = async () => {
+    const url = activeTab()?.url;
+    if (url) {
+      await open(url);
     }
   };
 
