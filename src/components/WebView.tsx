@@ -91,7 +91,7 @@ export const WebView: Component = () => {
           )}
         </>
       )}
-      {!activeTab()?.fallback_mode && !activeTab() && (
+      {!activeTab() && (
         <div class="empty-state">
           <h1>CNTRL BROWSER</h1>
           <p>Intent-based autonomous browsing</p>
