@@ -135,12 +135,39 @@ export const UrlBar: Component = () => {
 
   onMount(() => {
     const handler = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key === "l") {
         e.preventDefault();
         inputRef?.focus();
         inputRef?.select();
+        return;
       }
-    };
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        handleReload();
+        return;
+      }
+
+      if ((e.metaKey && e.key === "[") || (e.altKey && e.key === "ArrowLeft")) {
+        e.preventDefault();
+        handleBack();
+        return;
+      }
+
+      if ((e.metaKey && e.key === "]") || (e.altKey && e.key === "ArrowRight")) {
+        e.preventDefault();
+        handleForward();
+        return;
+      }
+    }; 
     window.addEventListener("keydown", handler);
     onCleanup(() => window.removeEventListener("keydown", handler));
   });
