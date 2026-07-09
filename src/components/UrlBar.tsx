@@ -1,3 +1,4 @@
+import { open } from "@tauri-apps/plugin-shell";
 import { Component, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { browserActions, browserState } from "../stores/browserStore";
 import "./UrlBar.css";
@@ -211,6 +212,12 @@ export const UrlBar: Component = () => {
       browserActions.openTab("cntrl://settings");
     }
   };
+  const handleOpenExternal = async () => {
+    const url = activeTab()?.url;
+    if (url) {
+      await open(url);
+    }
+  };
 
   const handleBack = () => {
     if (browserState.activeTabId) browserActions.goBack(browserState.activeTabId);
@@ -276,6 +283,9 @@ export const UrlBar: Component = () => {
             compat mode
           </span>
         )}
+        <button class="nav-btn" onClick={handleOpenExternal} title="Open in External Browser">
+          <span>Open</span>
+        </button>
         <button class="settings-icon-btn" onClick={handleOpenSettings} title="Settings">
           <SettingsIcon />
         </button>
