@@ -267,7 +267,10 @@ mod tests {
 
     #[test]
     fn offline_intent_routes_to_local() {
-        assert_eq!(router().score_intent("search offline maps"), ModelTier::Local);
+        assert_eq!(
+            router().score_intent("search offline maps"),
+            ModelTier::Local
+        );
     }
 
     #[test]
@@ -277,32 +280,50 @@ mod tests {
 
     #[test]
     fn local_intent_routes_to_local() {
-        assert_eq!(router().score_intent("run a local server"), ModelTier::Local);
+        assert_eq!(
+            router().score_intent("run a local server"),
+            ModelTier::Local
+        );
     }
 
     #[test]
     fn code_intent_routes_to_premium() {
-        assert_eq!(router().score_intent("write code for a linked list"), ModelTier::Premium);
+        assert_eq!(
+            router().score_intent("write code for a linked list"),
+            ModelTier::Premium
+        );
     }
 
     #[test]
     fn analyze_intent_routes_to_premium() {
-        assert_eq!(router().score_intent("analyze this dataset"), ModelTier::Premium);
+        assert_eq!(
+            router().score_intent("analyze this dataset"),
+            ModelTier::Premium
+        );
     }
 
     #[test]
     fn complex_intent_routes_to_premium() {
-        assert_eq!(router().score_intent("solve this complex math problem"), ModelTier::Premium);
+        assert_eq!(
+            router().score_intent("solve this complex math problem"),
+            ModelTier::Premium
+        );
     }
 
     #[test]
     fn reason_intent_routes_to_premium() {
-        assert_eq!(router().score_intent("reason through this argument"), ModelTier::Premium);
+        assert_eq!(
+            router().score_intent("reason through this argument"),
+            ModelTier::Premium
+        );
     }
 
     #[test]
     fn general_intent_routes_to_freemium() {
-        assert_eq!(router().score_intent("find a good recipe for pasta"), ModelTier::Freemium);
+        assert_eq!(
+            router().score_intent("find a good recipe for pasta"),
+            ModelTier::Freemium
+        );
     }
 
     #[test]
@@ -312,7 +333,9 @@ mod tests {
 
     #[test]
     fn case_insensitive_local_routing() {
-        assert_eq!(router().score_intent("OFFLINE mode please"), ModelTier::Local);
+        assert_eq!(
+            router().score_intent("OFFLINE mode please"),
+            ModelTier::Local
+        );
     }
 }
-

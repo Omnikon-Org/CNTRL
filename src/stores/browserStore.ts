@@ -23,6 +23,8 @@ listen("tabs-updated", () => {
   browserActions.fetchTabs();
 });
 
+const closedTabsStack: string[] = [];
+
 export const browserActions = {
   async fetchTabs() {
     const tabs: Tab[] = await invoke("get_tabs");
@@ -47,10 +49,21 @@ export const browserActions = {
   },
 
   async closeTab(id: string) {
+    const tab = browserState.tabs.find((t) => t.id === id);
+    if (tab && tab.url !== "about:blank") {
+      closedTabsStack.push(tab.url);
+    }
     await invoke("close_tab", { id });
     await this.fetchTabs();
     if (browserState.tabs.length === 0) {
       await this.openTab("about:blank");
+    }
+  },
+
+  async reopenLastTab() {
+    const url = closedTabsStack.pop();
+    if (url) {
+      await this.openTab(url);
     }
   },
 

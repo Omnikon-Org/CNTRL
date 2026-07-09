@@ -49,6 +49,17 @@ pub fn run() {
                 }
             });
 
+            let main_window = app
+                .get_webview_window("main")
+                .expect("main window not found");
+            let emit_handle = app.handle().clone();
+            main_window.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = emit_handle.emit("cmd-w", ());
+                }
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
