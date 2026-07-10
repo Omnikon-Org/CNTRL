@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 import { onCleanup, onMount } from "solid-js";
 import { TabBar } from "./components/TabBar";
 import { UrlBar } from "./components/UrlBar";
@@ -14,22 +15,29 @@ function App() {
       await browserActions.openTab("https://google.com");
     }
 
+    const unlistenCmdW = await listen<null>("cmd-w", () => {
+      if (browserState.activeTabId) {
+        browserActions.closeTab(browserState.activeTabId);
+      }
+    });
+
     const handler = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
 
-      if (e.key === "t") {
+      if (e.key === "t" && !e.shiftKey) {
         e.preventDefault();
         browserActions.openTab("about:blank");
-      } else if (e.key === "w") {
+      } else if (e.key === "T" && e.shiftKey) {
         e.preventDefault();
-        if (browserState.activeTabId) {
-          browserActions.closeTab(browserState.activeTabId);
-        }
+        browserActions.reopenLastTab();
       }
     };
 
     window.addEventListener("keydown", handler);
-    onCleanup(() => window.removeEventListener("keydown", handler));
+    onCleanup(() => {
+      unlistenCmdW();
+      window.removeEventListener("keydown", handler);
+    });
   });
 
   return (

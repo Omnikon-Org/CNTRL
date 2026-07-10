@@ -1,7 +1,7 @@
 import { Component, For, createSignal, onMount } from 'solid-js';
 import { platform } from '@tauri-apps/plugin-os';
 import { browserState, browserActions } from '../stores/browserStore';
-import { WindowControls } from './WindowControls';
+import { WindowControls } from '../stores/WindowControls';
 import './TabBar.css';
 
 export const TabBar: Component = () => {
@@ -32,6 +32,7 @@ export const TabBar: Component = () => {
             role="tab"
             tabindex={0}
             aria-selected={browserState.activeTabId === tab.id}
+            title={tab.title}
           >
             <div class="tab-content">
               {tab.favicon && (
@@ -41,6 +42,7 @@ export const TabBar: Component = () => {
             </div>
             <button
               class="close-btn"
+              aria-label={`Close tab: ${tab.title}`}
               onClick={(e) => {
                 e.stopPropagation();
                 browserActions.closeTab(tab.id);
@@ -53,7 +55,7 @@ export const TabBar: Component = () => {
           </div>
         )}
       </For>
-      <button class="new-tab-btn" onClick={handleNewTab} title="New Tab">+</button>
+      <button class="new-tab-btn" onClick={handleNewTab} title="New Tab" aria-label="Open new tab">+</button>
       {isWindows() && (
         <div style="margin-left: auto; display: flex; align-items: center;">
           <WindowControls />

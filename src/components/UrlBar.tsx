@@ -1,3 +1,4 @@
+import { open } from "@tauri-apps/plugin-shell";
 import { Component, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { browserActions, browserState } from "../stores/browserStore";
 import "./UrlBar.css";
@@ -135,12 +136,39 @@ export const UrlBar: Component = () => {
 
   onMount(() => {
     const handler = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key === "l") {
         e.preventDefault();
         inputRef?.focus();
         inputRef?.select();
+        return;
       }
-    };
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        handleReload();
+        return;
+      }
+
+      if ((e.metaKey && e.key === "[") || (e.altKey && e.key === "ArrowLeft")) {
+        e.preventDefault();
+        handleBack();
+        return;
+      }
+
+      if ((e.metaKey && e.key === "]") || (e.altKey && e.key === "ArrowRight")) {
+        e.preventDefault();
+        handleForward();
+        return;
+      }
+    }; 
     window.addEventListener("keydown", handler);
     onCleanup(() => window.removeEventListener("keydown", handler));
   });
@@ -182,6 +210,12 @@ export const UrlBar: Component = () => {
       browserActions.navigate(browserState.activeTabId, "cntrl://settings");
     } else {
       browserActions.openTab("cntrl://settings");
+    }
+  };
+  const handleOpenExternal = async () => {
+    const url = activeTab()?.url;
+    if (url) {
+      await open(url);
     }
   };
 
@@ -229,7 +263,7 @@ export const UrlBar: Component = () => {
           onKeyDown={handleKeyDown}
           onFocus={(e) => e.currentTarget.select()}
           class="url-input"
-          placeholder="Enter URL or search"
+          placeholder="Enter URL or intent… (⌘L to focus)"
           autocomplete="off"
           spellcheck={false}
           autocorrect="off"
@@ -250,6 +284,9 @@ export const UrlBar: Component = () => {
             compat mode
           </span>
         )}
+        <button class="nav-btn" onClick={handleOpenExternal} title="Open in External Browser">
+          <span>Open</span>
+        </button>
         <button class="settings-icon-btn" onClick={handleOpenSettings} title="Settings" aria-label="Open settings">
           <SettingsIcon />
         </button>

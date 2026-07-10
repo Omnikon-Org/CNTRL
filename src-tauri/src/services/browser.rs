@@ -21,7 +21,16 @@ pub struct Tab {
     pub fallback_mode: bool,
     pub loaded: bool,
 }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BrowserConfig {
+    pub user_agent: Option<String>,
+}
 
+impl Default for BrowserConfig {
+    fn default() -> Self {
+        Self { user_agent: None }
+    }
+}
 #[derive(Default)]
 pub struct BrowserState {
     pub tabs: Vec<Tab>,
@@ -31,6 +40,7 @@ pub struct BrowserState {
 #[derive(Clone)]
 pub struct BrowserService {
     state: Arc<RwLock<BrowserState>>,
+    config: Arc<RwLock<BrowserConfig>>,
 }
 
 impl Default for BrowserService {
@@ -43,6 +53,7 @@ impl BrowserService {
     pub fn new() -> Self {
         Self {
             state: Arc::new(RwLock::new(BrowserState::default())),
+            config: Arc::new(RwLock::new(BrowserConfig::default())),
         }
     }
 
@@ -84,9 +95,15 @@ impl BrowserService {
 
             let state_clone = self.state.clone();
             let id_clone = id;
-
+            let user_agent = {
+                let config = self.config.read();
+                config
+                    .user_agent
+                    .clone()
+                    .unwrap_or_else(|| CHROME_USER_AGENT.to_string())
+            };
             let builder = WebviewBuilder::new(&label, WebviewUrl::External(parsed_url))
-                .user_agent(CHROME_USER_AGENT)
+                .user_agent(&user_agent)
                 .initialization_script(init_script)
                 .on_page_load(move |webview, _payload| {
                     let mut state = state_clone.write();
@@ -340,7 +357,13 @@ impl BrowserService {
         }
         Ok(())
     }
+    pub fn get_browser_config(&self) -> BrowserConfig {
+        self.config.read().clone()
+    }
 
+    pub fn update_browser_config(&self, config: BrowserConfig) {
+        *self.config.write() = config;
+    }
     pub fn update_metadata(
         &self,
         id: Uuid,

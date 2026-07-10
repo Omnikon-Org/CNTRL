@@ -12,6 +12,7 @@
     "core:window:allow-unmaximize",
     "core:window:allow-close",
     "core:window:allow-is-maximized",
-    "os:allow-platform"
+    "os:allow-platform",
+    "shell:allow-open"
   ]
 }
