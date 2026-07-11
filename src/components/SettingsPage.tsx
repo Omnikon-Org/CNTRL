@@ -1,3 +1,4 @@
+import { Theme, getStoredTheme, setTheme } from "../utils/theme";
 import { Component, createEffect, createSignal, onMount, Show } from "solid-js";
 import {
   aiState,
@@ -9,7 +10,6 @@ import {
   updateAiConfig,
 } from "../stores/aiStore";
 import "./SettingsPage.css";
-
 const IconBot = () => (
   <svg
     width="16"
@@ -182,6 +182,7 @@ const IconLoader = () => (
 );
 
 export const SettingsPage: Component = () => {
+  const [theme, setThemeSignal] = createSignal<Theme>(getStoredTheme());
   const [tier, setTier] = createSignal<ModelTier>(aiState.tier);
   const [openRouterKey, setOpenRouterKey] = createSignal(aiState.openrouter_key || "");
   const [ollamaUrl, setOllamaUrl] = createSignal(aiState.ollama_url);
@@ -207,6 +208,7 @@ export const SettingsPage: Component = () => {
     setOpenRouterKey(aiState.openrouter_key || "");
     setOllamaUrl(aiState.ollama_url);
     setSelectedModel(aiState.selected_model);
+    setThemeSignal(getStoredTheme());
   });
 
   createEffect(() => {
@@ -240,6 +242,7 @@ export const SettingsPage: Component = () => {
   const handleSave = async (e: Event) => {
     e.preventDefault();
     setSaveStatus("saving");
+    setTheme(theme());
     await updateAiConfig({
       tier: tier(),
       openrouter_key: openRouterKey() || null,
@@ -318,6 +321,41 @@ export const SettingsPage: Component = () => {
                 <IconBot />
               </span>
               <h2 class="sp-card-title">AI Configuration</h2>
+            </div>
+            <div class="sp-field">
+              <label class="sp-label" for="sp-theme">
+                App Theme
+              </label>
+
+              <div class="sp-select-wrap">
+                <select
+                  id="sp-theme"
+                  class="sp-select"
+                  value={theme()}
+                  onInput={(e) => {
+                    setThemeSignal(e.currentTarget.value as Theme);
+                  }}
+                >
+                  <option value="system">System</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+
+                <span class="sp-select-caret" aria-hidden="true">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </span>
+              </div>
             </div>
 
             <div class="sp-field">
@@ -476,6 +514,7 @@ export const SettingsPage: Component = () => {
               </div>
             </section>
           </Show>
+
 
           <section class="sp-card sp-card-actions">
             <button
