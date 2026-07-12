@@ -59,3 +59,8 @@ We welcome contributions of all kinds — bug fixes, features, tests, and docume
 4. Open a Pull Request against **`main`** with a clear description.
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, code style requirements, and commit message conventions.
+## Continuous Integration (CI)
+
+This repository utilizes GitHub Actions to maintain code quality. Every time you push changes or submit a Pull Request targeting `main` or `phase-1-scaffold`, an automated CI workflow will run:
+* **Frontend Lint:** Verifies code styling standards using TypeScript and ESLint checks.
+* **Rust Check:** Runs `cargo check` to guarantee the backend builds cleanly without errors.

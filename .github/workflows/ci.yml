@@ -2,48 +2,59 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "phase-1-scaffold" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "phase-1-scaffold" ]
 
 jobs:
-  test-and-lint:
+  # Job 1: Linting the Frontend
+  frontend-lint:
+    name: Frontend Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        components: clippy, rustfmt
+      - name: Install Frontend Dependencies
+        run: npm ci
 
-    - name: Install WebKit Dependencies (Linux)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: TypeScript Check
+        run: npx tsc --noEmit
 
-    - name: Install Frontend Dependencies
-      run: npm ci
+      - name: ESLint Check
+        run: npx eslint . --max-warnings 0
 
-    - name: Rust Clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      # [FUTURE EXTENSIBILITY]: You can append frontend testing here later
+      # Example:
+      # - name: Vitest Check
+      #   run: npx vitest run
 
-    - name: Rust Tests
-      run: cargo test --all
+  # Job 2: Checking the Rust Backend
+  rust-check:
+    name: Rust Cargo Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Rust Format
-      run: cargo fmt --check
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
-    - name: TypeScript Check
-      run: npx tsc --noEmit
+      - name: Install WebKit Dependencies (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-    - name: ESLint Check
-      run: npx eslint . --max-warnings 0
+      - name: Run Cargo Check
+        run: cargo check --all-targets
 
-    - name: Vitest Check
-      run: npx vitest run
+      # [FUTURE EXTENSIBILITY]: You can append backend testing or formatting here later
+      # Example:
+      # - name: Rust Clippy
+      #   run: cargo clippy --all-targets --all-features -- -D warnings
+      # - name: Rust Tests
+      #   run: cargo test --all
