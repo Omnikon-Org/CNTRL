@@ -118,13 +118,11 @@ mod tests {
         // Ensure clean state
         let _ = delete_secret(test_key);
 
-        // Store
-        let store_result = store_secret(test_key, test_value);
-        if store_result.is_err() {
+        if let Err(e) = store_secret(test_key, test_value) {
             // Keychain unavailable in this environment — skip gracefully
             eprintln!(
-                "Keychain unavailable ({}), skipping roundtrip test",
-                store_result.unwrap_err()
+                "Keychain unavailable ({:?}), skipping roundtrip test",
+                e
             );
             return;
         }
