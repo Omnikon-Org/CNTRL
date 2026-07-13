@@ -5,6 +5,7 @@ import { UrlBar } from "./components/UrlBar";
 import { WebView } from "./components/WebView";
 import { initAiStore } from "./stores/aiStore";
 import { browserActions, browserState } from "./stores/browserStore";
+import { CommandBar } from "./components/CommandBar";
 import "./App.css";
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
       <TabBar />
       <UrlBar />
       <WebView />
+      <CommandBar />
     </div>
   );
 }

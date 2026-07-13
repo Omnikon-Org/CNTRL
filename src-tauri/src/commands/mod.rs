@@ -2,3 +2,4 @@
 pub mod ai;
 pub mod browser;
 pub mod background;
+pub mod intent;

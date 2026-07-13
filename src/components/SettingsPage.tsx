@@ -1,27 +1,31 @@
-import { Component, createEffect, createSignal, onMount, Show } from "solid-js";
+/**
+ * @module components/SettingsPage
+ * CNTRL Browser Settings Page.
+ *
+ * Allows the user to configure AI providers and inspect health status.
+ * API keys are stored exclusively in the OS keychain via the Rust
+ * `keychain` service — they are never written to localStorage, SQLite,
+ * or any file. The UI only ever sees masked sentinels ("***stored***").
+ */
 import {
-  aiState,
-  askAi,
-  getHfModels,
-  getOpenRouterFreeModels,
-  ModelTier,
-  testIntentRouter,
-  updateAiConfig,
-} from "../stores/aiStore";
+  Component,
+  For,
+  Show,
+  createSignal,
+  onMount,
+} from "solid-js";
+import { invoke } from "@tauri-apps/api/core";
+import { askAi, getHfModels, getOpenRouterFreeModels, healthCheckAll, testIntentRouter } from "../stores/aiStore";
+import type { ProviderHealth } from "../types";
 import "./SettingsPage.css";
 import { browserActions } from "../stores/browserStore";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Icon components (inline SVG — no external deps)
+// ─────────────────────────────────────────────────────────────────────────────
+
 const IconBot = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <rect width="18" height="10" x="3" y="11" rx="2" />
     <circle cx="12" cy="5" r="2" />
     <path d="M12 7v4" />
@@ -31,17 +35,7 @@ const IconBot = () => (
 );
 
 const IconKey = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <circle cx="7.5" cy="15.5" r="5.5" />
     <path d="m21 2-9.6 9.6" />
     <path d="m15.5 7.5 3 3L22 7l-3-3" />
@@ -49,71 +43,32 @@ const IconKey = () => (
 );
 
 const IconSparkles = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-    <path d="M5 3v4" />
-    <path d="M19 17v4" />
-    <path d="M3 5h4" />
-    <path d="M17 19h4" />
+    <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
   </svg>
 );
 
-const IconCheckCircle = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2.5"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="m9 12 2 2 4-4" />
+const IconBoxes = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" />
+    <path d="m7 16.5-4.74-2.85" /><path d="m7 16.5 5-3" /><path d="M7 16.5v5.17" />
+    <path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" />
+    <path d="m17 16.5-5-3" /><path d="m17 16.5 4.74-2.85" /><path d="M17 16.5v5.17" />
+    <path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" />
+    <path d="M12 8 7.26 5.15" /><path d="m12 8 4.74-2.85" /><path d="M12 13.5V8" />
   </svg>
 );
 
 const IconEye = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 const IconEyeOff = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
     <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
     <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
@@ -121,165 +76,148 @@ const IconEyeOff = () => (
   </svg>
 );
 
-const IconCopy = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-  </svg>
-);
-
-const IconBoxes = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" />
-    <path d="m7 16.5-4.74-2.85" />
-    <path d="m7 16.5 5-3" />
-    <path d="M7 16.5v5.17" />
-    <path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" />
-    <path d="m17 16.5-5-3" />
-    <path d="m17 16.5 4.74-2.85" />
-    <path d="M17 16.5v5.17" />
-    <path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" />
-    <path d="M12 8 7.26 5.15" />
-    <path d="m12 8 4.74-2.85" />
-    <path d="M12 13.5V8" />
-  </svg>
-);
-
 const IconLoader = () => (
-  <svg
-    class="sp-spin"
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2.5"
-    stroke-linecap="round"
-    aria-hidden="true"
-  >
+  <svg class="sp-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
     <path d="M21 12a9 9 0 1 1-6.219-8.56" />
   </svg>
 );
 
-export const SettingsPage: Component = () => {
-  const [tier, setTier] = createSignal<ModelTier>(aiState.tier);
-  const [openRouterKey, setOpenRouterKey] = createSignal(aiState.openrouter_key || "");
-  const [ollamaUrl, setOllamaUrl] = createSignal(aiState.ollama_url);
-  const [selectedModel, setSelectedModel] = createSignal(aiState.selected_model);
-  const [saveStatus, setSaveStatus] = createSignal<"idle" | "saving" | "saved" | "error">("idle");
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 
+/** Matches the Rust `(String, u8, String)` tuple from `test_intent_router`. */
+type IntentScore = [string, number, string];
+
+/** Provider key entry shown in the Authentication section. */
+interface ProviderKeyEntry {
+  id: string;
+  label: string;
+  placeholder: string;
+}
+
+const PROVIDER_KEYS: ProviderKeyEntry[] = [
+  { id: "openrouter", label: "OpenRouter API Key", placeholder: "sk-or-v1-…" },
+  { id: "gemini",     label: "Google Gemini API Key", placeholder: "AIza…" },
+  { id: "groq",       label: "Groq API Key", placeholder: "gsk_…" },
+  { id: "huggingface",label: "HuggingFace Token", placeholder: "hf_…" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SettingsPage: Component = () => {
+  // ── Key management ─────────────────────────────────────────────────────
+  /** Map of provider id → current input value (masked sentinel or real key). */
+  const [keyInputs, setKeyInputs] = createSignal<Record<string, string>>({});
+  const [showKeys, setShowKeys] = createSignal<Record<string, boolean>>({});
+  const [keySaveStatus, setKeySaveStatus] = createSignal<Record<string, "idle" | "saving" | "saved" | "error">>({});
+
+  // ── Ollama config ──────────────────────────────────────────────────────
+  const [ollamaUrl, setOllamaUrl] = createSignal("http://localhost:11434");
+  const [ollamaModel, setOllamaModel] = createSignal("llama3");
+
+  // ── AI test ────────────────────────────────────────────────────────────
   const [testPrompt, setTestPrompt] = createSignal("What is the capital of France?");
   const [testResponse, setTestResponse] = createSignal("");
   const [testIsError, setTestIsError] = createSignal(false);
   const [isTesting, setIsTesting] = createSignal(false);
 
-  const [models, setModels] = createSignal<string[]>([]);
-  const [isLoadingModels, setIsLoadingModels] = createSignal(false);
-
-  const [intentScores, setIntentScores] = createSignal<[string, string][]>([]);
+  // ── Intent router test ─────────────────────────────────────────────────
+  const [intentScores, setIntentScores] = createSignal<IntentScore[]>([]);
   const [isScoring, setIsScoring] = createSignal(false);
 
-  const [showKey, setShowKey] = createSignal(false);
   const [userAgent, setUserAgent] = createSignal("");
-  const [isLoadingBrowserConfig, setIsLoadingBrowserConfig] = createSignal(true);
-  const [copied, setCopied] = createSignal(false);
+  const [isLoadingBrowserConfig] = createSignal(true);
 
-  onMount(() => {
-    setTier(aiState.tier);
-    setOpenRouterKey(aiState.openrouter_key || "");
-    setOllamaUrl(aiState.ollama_url);
-    setSelectedModel(aiState.selected_model);
-    browserActions.getBrowserConfig().then((config) => {
-      setUserAgent(config.user_agent ?? "");
-      setIsLoadingBrowserConfig(false);
-    });
-  });
+  // ── Model lists ────────────────────────────────────────────────────────
+  const [hfModels, setHfModels] = createSignal<string[]>([]);
+  const [orModels, setOrModels] = createSignal<string[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = createSignal(false);
 
-  createEffect(() => {
-    const currentTier = tier();
-    if (currentTier === "Freemium") {
-      setIsLoadingModels(true);
-      getOpenRouterFreeModels().then((res) => {
-        setModels(res);
-        const firstModel = res[0];
-        if (firstModel !== undefined && !res.includes(selectedModel())) {
-          setSelectedModel(firstModel);
-        }
-        setIsLoadingModels(false);
-      });
-    } else if (currentTier === "Premium") {
-      setIsLoadingModels(true);
-      getHfModels().then((res) => {
-        setModels(res);
-        const firstModel = res[0];
-        if (firstModel !== undefined && !res.includes(selectedModel())) {
-          setSelectedModel(firstModel);
-        }
-        setIsLoadingModels(false);
-      });
-    } else {
-      setModels([]);
-      setSelectedModel("llama3");
+  // ── Health checks ──────────────────────────────────────────────────────
+  const [providerHealth, setProviderHealth] = createSignal<ProviderHealth[]>([]);
+  const [isCheckingHealth, setIsCheckingHealth] = createSignal(false);
+
+  // ── Init ───────────────────────────────────────────────────────────────
+  onMount(async () => {
+    // Load key status for each provider (masked sentinel or empty)
+    const statuses: Record<string, string> = {};
+    for (const p of PROVIDER_KEYS) {
+      try {
+        statuses[p.id] = await invoke<string>("get_api_key_status", { provider: p.id });
+      } catch {
+        statuses[p.id] = "";
+      }
     }
+    setKeyInputs(statuses);
+
+    // Prefetch model lists
+    setIsLoadingModels(true);
+    const [hf, or_] = await Promise.allSettled([getHfModels(), getOpenRouterFreeModels()]);
+    if (hf.status === "fulfilled") setHfModels(hf.value);
+    if (or_.status === "fulfilled") setOrModels(or_.value);
+    setIsLoadingModels(false);
+
+    // Run initial health check
+    await runHealthCheck();
   });
 
-  const handleSave = async (e: Event) => {
-    e.preventDefault();
-    setSaveStatus("saving");
-    await updateAiConfig({
-      tier: tier(),
-      openrouter_key: openRouterKey() || null,
-      ollama_url: ollamaUrl(),
-      selected_model: selectedModel(),
-    });
-    await browserActions.updateBrowserConfig({
-      user_agent: userAgent() || null,
-    });
-    setSaveStatus("saved");
-    setTimeout(() => setSaveStatus("idle"), 2500);
+  // ── Handlers ───────────────────────────────────────────────────────────
+
+  const handleSaveBrowserConfig = async () => {
+    try {
+      await browserActions.updateBrowserConfig({
+        user_agent: userAgent() || null,
+      });
+      // Optionally show a temporary success state here
+    } catch (err) {
+      console.error("Failed to save browser config:", err);
+    }
   };
 
-  const handleTestAi = async () => {
+  const handleSaveKey = async (providerId: string): Promise<void> => {
+    const value = keyInputs()[providerId] ?? "";
+    setKeySaveStatus((prev) => ({ ...prev, [providerId]: "saving" }));
+    try {
+      await invoke<void>("store_api_key", { provider: providerId, value });
+      // Re-fetch status to confirm
+      const status = await invoke<string>("get_api_key_status", { provider: providerId });
+      setKeyInputs((prev) => ({ ...prev, [providerId]: status }));
+      setKeySaveStatus((prev) => ({ ...prev, [providerId]: "saved" }));
+      setTimeout(() => setKeySaveStatus((prev) => ({ ...prev, [providerId]: "idle" })), 2500);
+    } catch (err) {
+      console.error("Failed to save key:", err);
+      setKeySaveStatus((prev) => ({ ...prev, [providerId]: "error" }));
+    }
+  };
+
+  const handleDeleteKey = async (providerId: string): Promise<void> => {
+    await invoke<void>("delete_api_key", { provider: providerId });
+    setKeyInputs((prev) => ({ ...prev, [providerId]: "" }));
+  };
+
+  const handleTestAi = async (): Promise<void> => {
     setIsTesting(true);
     setTestResponse("");
     setTestIsError(false);
     try {
       const response = await askAi(testPrompt());
       setTestResponse(response);
-      setTestIsError(false);
-    } catch (err: any) {
-      setTestResponse(`${err}`);
+    } catch (err: unknown) {
+      setTestResponse(String(err));
       setTestIsError(true);
     } finally {
       setIsTesting(false);
     }
   };
 
-  const handleTestIntents = async () => {
+  const handleTestIntents = async (): Promise<void> => {
     setIsScoring(true);
     const sampleIntents = [
       "Summarize this article for me.",
-      "Write a complex react hook for debouncing.",
+      "Write a complex React hook for debouncing.",
       "Analyze the logical flaws in this reasoning.",
       "Find me a recipe for chocolate cake.",
       "What is the weather like today?",
@@ -291,7 +229,8 @@ export const SettingsPage: Component = () => {
     ];
     try {
       const scores = await testIntentRouter(sampleIntents);
-      setIntentScores(scores);
+      // The command now returns [intent, score, tier] tuples
+      setIntentScores(scores as unknown as IntentScore[]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -299,152 +238,45 @@ export const SettingsPage: Component = () => {
     }
   };
 
-  const handleCopyKey = async () => {
-    const key = openRouterKey();
-    if (!key) return;
-    await navigator.clipboard.writeText(key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+  const runHealthCheck = async (): Promise<void> => {
+    setIsCheckingHealth(true);
+    try {
+      const results = await healthCheckAll();
+      const health: ProviderHealth[] = Object.entries(results).map(([provider, healthy]) => ({
+        provider,
+        healthy,
+      }));
+      setProviderHealth(health);
+    } catch (err) {
+      console.error("Health check failed:", err);
+    } finally {
+      setIsCheckingHealth(false);
+    }
   };
 
   return (
     <div class="sp-page">
       <div class="sp-content">
         <header class="sp-header">
-          <div class="sp-header-icon">
-            <IconBoxes />
-          </div>
+          <div class="sp-header-icon"><IconBoxes /></div>
           <div>
             <h1 class="sp-title">CNTRL Settings</h1>
-            <p class="sp-subtitle">Configure your AI model and connection preferences</p>
+            <p class="sp-subtitle">Configure AI providers and inspect connection health</p>
           </div>
         </header>
 
-        <form onSubmit={handleSave}>
-          <section class="sp-card">
-            <div class="sp-card-header">
-              <span class="sp-card-icon">
-                <IconBot />
-              </span>
-              <h2 class="sp-card-title">AI Configuration</h2>
-            </div>
+        {/* ── Advanced Settings (Browser Config) ────────────────────────── */}
+        <section class="sp-card" aria-labelledby="advanced-heading">
+          <div class="sp-card-header">
+            <span class="sp-card-icon"><IconKey /></span>
+            <h2 class="sp-card-title" id="advanced-heading">Advanced Settings</h2>
+          </div>
 
-            <div class="sp-field">
-              <label class="sp-label" for="sp-tier">
-                AI Tier
-              </label>
-              <div class="sp-select-wrap">
-                <select
-                  id="sp-tier"
-                  class="sp-select"
-                  value={tier()}
-                  onInput={(e) => setTier(e.currentTarget.value as ModelTier)}
-                >
-                  <option value="Local">Tier 1 — Local (Ollama)</option>
-                  <option value="Freemium">Tier 2 — Freemium (OpenRouter Free)</option>
-                  <option value="Premium">Tier 3 — Premium (HF / OpenRouter Pro)</option>
-                </select>
-                <span class="sp-select-caret" aria-hidden="true">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-
-            <div class="sp-field">
-              <label class="sp-label" for="sp-model">
-                Model
-              </label>
-              <Show
-                when={tier() !== "Local"}
-                fallback={
-                  <input
-                    id="sp-model"
-                    class="sp-input"
-                    type="text"
-                    value={selectedModel()}
-                    onInput={(e) => setSelectedModel(e.currentTarget.value)}
-                    placeholder="e.g. llama3"
-                  />
-                }
-              >
-                <div class="sp-select-wrap">
-                  <select
-                    id="sp-model"
-                    class="sp-select"
-                    value={selectedModel()}
-                    onInput={(e) => setSelectedModel(e.currentTarget.value)}
-                    disabled={isLoadingModels()}
-                  >
-                    <Show when={isLoadingModels()}>
-                      <option>Loading available models…</option>
-                    </Show>
-                    <Show when={!isLoadingModels() && models().length === 0}>
-                      <option>No models found</option>
-                    </Show>
-                    {models().map((m) => (
-                      <option value={m}>{m}</option>
-                    ))}
-                  </select>
-                  <span class="sp-select-caret" aria-hidden="true">
-                    <Show when={!isLoadingModels()} fallback={<IconLoader />}>
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
-                    </Show>
-                  </span>
-                </div>
-              </Show>
-            </div>
-
-            <Show when={tier() === "Local"}>
-              <div class="sp-field">
-                <label class="sp-label" for="sp-ollama-url">
-                  Ollama API URL
-                </label>
-                <input
-                  id="sp-ollama-url"
-                  class="sp-input"
-                  type="text"
-                  value={ollamaUrl()}
-                  onInput={(e) => setOllamaUrl(e.currentTarget.value)}
-                  placeholder="http://localhost:11434"
-                />
-              </div>
-            </Show>
-          </section>
-          <section class="sp-card">
-            <div class="sp-card-header">
-              <span class="sp-card-icon">
-                <IconKey />
-              </span>
-              <h2 class="sp-card-title">Advanced Settings</h2>
-            </div>
-
-            <div class="sp-field">
-              <label class="sp-label" for="sp-user-agent">
-                User Agent
-              </label>
-
+          <div class="sp-field">
+            <label class="sp-label" for="sp-user-agent">
+              User Agent
+            </label>
+            <div class="sp-input-group">
               <input
                 id="sp-user-agent"
                 class="sp-input"
@@ -454,104 +286,225 @@ export const SettingsPage: Component = () => {
                 disabled={isLoadingBrowserConfig()}
                 onInput={(e) => setUserAgent(e.currentTarget.value)}
               />
-
-              <small class="sp-description">
-                This User Agent will be applied to newly opened browser tabs.
-              </small>
-            </div>
-          </section>
-
-          <Show when={tier() === "Freemium" || tier() === "Premium"}>
-            <section class="sp-card">
-              <div class="sp-card-header">
-                <span class="sp-card-icon">
-                  <IconKey />
-                </span>
-                <h2 class="sp-card-title">Authentication</h2>
-              </div>
-
-              <div class="sp-field">
-                <label class="sp-label" for="sp-api-key">
-                  OpenRouter API Key
-                </label>
-                <div class="sp-input-group">
-                  <input
-                    id="sp-api-key"
-                    class="sp-input sp-input-key"
-                    type={showKey() ? "text" : "password"}
-                    value={openRouterKey()}
-                    onInput={(e) => setOpenRouterKey(e.currentTarget.value)}
-                    placeholder="sk-or-v1-…"
-                    autocomplete="off"
-                    spellcheck={false}
-                  />
-                  <button
-                    type="button"
-                    class="sp-input-action"
-                    onClick={() => setShowKey((v) => !v)}
-                    title={showKey() ? "Hide key" : "Show key"}
-                    aria-label={showKey() ? "Hide API key" : "Show API key"}
-                  >
-                    <Show when={showKey()} fallback={<IconEye />}>
-                      <IconEyeOff />
-                    </Show>
-                  </button>
-                  <button
-                    type="button"
-                    class={`sp-input-action${copied() ? " sp-input-action--copied" : ""}`}
-                    onClick={handleCopyKey}
-                    disabled={!openRouterKey()}
-                    title="Copy key"
-                    aria-label="Copy API key to clipboard"
-                  >
-                    <Show when={!copied()} fallback={<IconCheckCircle />}>
-                      <IconCopy />
-                    </Show>
-                  </button>
-                </div>
-                <p class="sp-hint">Stored securely on disk and never transmitted in plaintext.</p>
-              </div>
-            </section>
-          </Show>
-
-          <section class="sp-card sp-card-actions">
-            <button
-              type="submit"
-              class="sp-btn sp-btn-primary"
-              disabled={saveStatus() === "saving"}
-            >
-              <Show
-                when={saveStatus() === "saving"}
-                fallback={
-                  <Show when={saveStatus() === "saved"} fallback={<span>Save Settings</span>}>
-                    <span>Saved</span>
-                  </Show>
-                }
+              <button
+                type="button"
+                class="sp-btn sp-btn-secondary"
+                onClick={() => void handleSaveBrowserConfig()}
+                disabled={isLoadingBrowserConfig()}
               >
-                <span>Saving…</span>
-              </Show>
-            </button>
-            <Show when={saveStatus() === "saved"}>
-              <span class="sp-status sp-status-success">
-                <span class="status-indicator success"></span>
-                <span>Settings saved successfully</span>
-              </span>
-            </Show>
-          </section>
-        </form>
+                Save
+              </button>
+            </div>
+            <p class="sp-hint">This User Agent will be applied to newly opened browser tabs.</p>
+          </div>
+        </section>
 
-        <section class="sp-card">
+        {/* ── Provider Health ──────────────────────────────────────────── */}
+        <section class="sp-card" aria-labelledby="health-heading">
           <div class="sp-card-header">
-            <span class="sp-card-icon">
-              <IconSparkles />
-            </span>
-            <h2 class="sp-card-title">Test AI Connection</h2>
+            <span class="sp-card-icon"><IconSparkles /></span>
+            <h2 class="sp-card-title" id="health-heading">Provider Health</h2>
+          </div>
+
+          <div class="sp-health-grid" role="list" aria-label="Provider health status">
+            <Show when={isCheckingHealth()} fallback={
+              <Show when={providerHealth().length > 0} fallback={
+                <p class="sp-hint">No providers checked yet.</p>
+              }>
+                <For each={providerHealth()}>
+                  {(entry) => (
+                    <div class="sp-health-row" role="listitem">
+                      <span
+                        class={`status-dot ${entry.healthy ? "success" : "error"}`}
+                        aria-label={entry.healthy ? "healthy" : "unreachable"}
+                      />
+                      <span class="sp-health-name">{entry.provider}</span>
+                      <span class={`sp-health-label ${entry.healthy ? "sp-text-success" : "sp-text-danger"}`}>
+                        {entry.healthy ? "OK" : "OFFLINE"}
+                      </span>
+                    </div>
+                  )}
+                </For>
+              </Show>
+            }>
+              <div class="sp-status sp-status-processing">
+                <IconLoader />
+                <span>Checking providers…</span>
+              </div>
+            </Show>
+          </div>
+
+          <div class="sp-row">
+            <button
+              id="sp-health-check-btn"
+              type="button"
+              class="sp-btn sp-btn-secondary"
+              onClick={() => void runHealthCheck()}
+              disabled={isCheckingHealth()}
+              aria-busy={isCheckingHealth()}
+            >
+              {isCheckingHealth() ? "Checking…" : "Refresh Health"}
+            </button>
+          </div>
+        </section>
+
+        {/* ── API Keys ─────────────────────────────────────────────────── */}
+        <section class="sp-card" aria-labelledby="auth-heading">
+          <div class="sp-card-header">
+            <span class="sp-card-icon"><IconKey /></span>
+            <h2 class="sp-card-title" id="auth-heading">API Keys</h2>
+          </div>
+          <p class="sp-hint" style="margin-bottom: 1rem;">
+            Keys are stored in the OS keychain — never on disk or in any database.
+          </p>
+
+          <For each={PROVIDER_KEYS}>
+            {(entry) => {
+              const inputId = `sp-key-${entry.id}`;
+              const status = () => keySaveStatus()[entry.id] ?? "idle";
+              const value = () => keyInputs()[entry.id] ?? "";
+              const visible = () => showKeys()[entry.id] ?? false;
+
+              return (
+                <div class="sp-field sp-key-field">
+                  <label class="sp-label" for={inputId}>
+                    {entry.label}
+                  </label>
+                  <div class="sp-input-group">
+                    <input
+                      id={inputId}
+                      class="sp-input sp-input-key"
+                      type={visible() ? "text" : "password"}
+                      value={value()}
+                      onInput={(e) =>
+                        setKeyInputs((prev) => ({ ...prev, [entry.id]: e.currentTarget.value }))
+                      }
+                      placeholder={entry.placeholder}
+                      autocomplete="off"
+                      spellcheck={false}
+                    />
+                    <button
+                      type="button"
+                      class="sp-input-action"
+                      onClick={() =>
+                        setShowKeys((prev) => ({ ...prev, [entry.id]: !prev[entry.id] }))
+                      }
+                      title={visible() ? "Hide key" : "Show key"}
+                      aria-label={visible() ? "Hide API key" : "Show API key"}
+                    >
+                      <Show when={visible()} fallback={<IconEye />}>
+                        <IconEyeOff />
+                      </Show>
+                    </button>
+                    <button
+                      type="button"
+                      class="sp-btn sp-btn-secondary"
+                      onClick={() => void handleSaveKey(entry.id)}
+                      disabled={status() === "saving" || !value()}
+                      aria-busy={status() === "saving"}
+                    >
+                      {status() === "saving" ? "Saving…" : status() === "saved" ? "Saved ✓" : "Save"}
+                    </button>
+                    <Show when={value()}>
+                      <button
+                        type="button"
+                        class="sp-btn sp-btn-danger"
+                        onClick={() => void handleDeleteKey(entry.id)}
+                        title="Remove key from keychain"
+                        aria-label={`Remove ${entry.label} from keychain`}
+                      >
+                        Remove
+                      </button>
+                    </Show>
+                  </div>
+                  <Show when={status() === "error"}>
+                    <p class="sp-hint sp-text-danger">Failed to save key. Check keychain access.</p>
+                  </Show>
+                </div>
+              );
+            }}
+          </For>
+        </section>
+
+        {/* ── Ollama Config ─────────────────────────────────────────────── */}
+        <section class="sp-card" aria-labelledby="ollama-heading">
+          <div class="sp-card-header">
+            <span class="sp-card-icon"><IconBot /></span>
+            <h2 class="sp-card-title" id="ollama-heading">Ollama (Local / Tier 1)</h2>
+          </div>
+          <div class="sp-field">
+            <label class="sp-label" for="sp-ollama-url">Ollama API URL</label>
+            <input
+              id="sp-ollama-url"
+              class="sp-input"
+              type="text"
+              value={ollamaUrl()}
+              onInput={(e) => setOllamaUrl(e.currentTarget.value)}
+              placeholder="http://localhost:11434"
+            />
+          </div>
+          <div class="sp-field">
+            <label class="sp-label" for="sp-ollama-model">Model</label>
+            <input
+              id="sp-ollama-model"
+              class="sp-input"
+              type="text"
+              value={ollamaModel()}
+              onInput={(e) => setOllamaModel(e.currentTarget.value)}
+              placeholder="llama3"
+            />
+          </div>
+        </section>
+
+        {/* ── Model Lists ───────────────────────────────────────────────── */}
+        <section class="sp-card" aria-labelledby="models-heading">
+          <div class="sp-card-header">
+            <span class="sp-card-icon"><IconBoxes /></span>
+            <h2 class="sp-card-title" id="models-heading">Available Models</h2>
+          </div>
+
+          <Show when={isLoadingModels()} fallback={
+            <div class="sp-model-cols">
+              <div>
+                <p class="sp-label" style="margin-bottom: 0.5rem;">OpenRouter Free Models ({orModels().length})</p>
+                <ul class="sp-model-list" role="list" aria-label="OpenRouter free models">
+                  <For each={orModels().slice(0, 8)}>
+                    {(m) => <li class="sp-model-item" role="listitem">{m}</li>}
+                  </For>
+                  <Show when={orModels().length > 8}>
+                    <li class="sp-model-item sp-text-secondary" role="listitem">+{orModels().length - 8} more…</li>
+                  </Show>
+                </ul>
+              </div>
+              <div>
+                <p class="sp-label" style="margin-bottom: 0.5rem;">HuggingFace Models ({hfModels().length})</p>
+                <ul class="sp-model-list" role="list" aria-label="HuggingFace models">
+                  <For each={hfModels().slice(0, 8)}>
+                    {(m) => <li class="sp-model-item" role="listitem">{m}</li>}
+                  </For>
+                  <Show when={hfModels().length > 8}>
+                    <li class="sp-model-item sp-text-secondary" role="listitem">+{hfModels().length - 8} more…</li>
+                  </Show>
+                </ul>
+              </div>
+            </div>
+          }>
+            <div class="sp-status sp-status-processing">
+              <IconLoader />
+              <span>Loading model lists…</span>
+            </div>
+          </Show>
+        </section>
+
+        {/* ── Test AI ───────────────────────────────────────────────────── */}
+        <section class="sp-card" aria-labelledby="test-heading">
+          <div class="sp-card-header">
+            <span class="sp-card-icon"><IconSparkles /></span>
+            <h2 class="sp-card-title" id="test-heading">Test AI Connection</h2>
           </div>
 
           <div class="sp-field">
-            <label class="sp-label" for="sp-test-prompt">
-              Prompt
-            </label>
+            <label class="sp-label" for="sp-test-prompt">Prompt</label>
             <input
               id="sp-test-prompt"
               class="sp-input"
@@ -564,80 +517,61 @@ export const SettingsPage: Component = () => {
 
           <div class="sp-row">
             <button
+              id="sp-test-ai-btn"
               type="button"
               class="sp-btn sp-btn-secondary"
-              onClick={handleTestAi}
+              onClick={() => void handleTestAi()}
               disabled={isTesting()}
+              aria-busy={isTesting()}
             >
-              <Show when={isTesting()} fallback={<span>Test AI</span>}>
-                <span>Testing…</span>
-              </Show>
+              {isTesting() ? "Testing…" : "Test AI"}
             </button>
-            <Show when={isTesting()}>
-              <span class="sp-status sp-status-processing">
-                <span class="status-indicator processing"></span>
-                <span>Testing AI…</span>
-              </span>
-            </Show>
           </div>
 
           <Show when={testResponse()}>
-            <div class={`sp-response${testIsError() ? " sp-response-error" : ""}`}>
+            <div class={`sp-response${testIsError() ? " sp-response-error" : ""}`} role="status">
               <div class="sp-response-label">
-                <Show
-                  when={!testIsError()}
-                  fallback={
-                    <>
-                      <span class="status-indicator error"></span>
-                      <span>Error</span>
-                    </>
-                  }
-                >
-                  <span class="status-indicator success"></span>
-                  <span>Response</span>
-                </Show>
+                <span class={`status-indicator ${testIsError() ? "error" : "success"}`} />
+                <span>{testIsError() ? "Error" : "Response"}</span>
               </div>
               <p class="sp-response-text">{testResponse()}</p>
             </div>
           </Show>
         </section>
 
-        <section class="sp-card">
+        {/* ── Intent Router Diagnostics ─────────────────────────────────── */}
+        <section class="sp-card" aria-labelledby="router-heading">
           <div class="sp-card-header">
-            <span class="sp-card-icon">
-              <IconBoxes />
-            </span>
-            <h2 class="sp-card-title">Intent Router</h2>
-            <p class="sp-card-desc">Run 10 sample prompts through the AI router scoring logic.</p>
+            <span class="sp-card-icon"><IconBoxes /></span>
+            <h2 class="sp-card-title" id="router-heading">Intent Router</h2>
+            <p class="sp-card-desc">Run 10 sample prompts through the complexity scorer.</p>
           </div>
 
           <div class="sp-row">
             <button
+              id="sp-run-intent-test-btn"
               type="button"
               class="sp-btn sp-btn-secondary"
-              onClick={handleTestIntents}
+              onClick={() => void handleTestIntents()}
               disabled={isScoring()}
+              aria-busy={isScoring()}
             >
-              <Show when={isScoring()} fallback={<span>Run Intent Test</span>}>
-                <span>Scoring…</span>
-              </Show>
+              {isScoring() ? "Scoring…" : "Run Intent Test"}
             </button>
-            <Show when={isScoring()}>
-              <span class="sp-status sp-status-processing">
-                <span class="status-indicator processing"></span>
-                <span>Scoring…</span>
-              </span>
-            </Show>
           </div>
 
           <Show when={intentScores().length > 0}>
             <ul class="sp-scores" role="list">
-              {intentScores().map(([intent, score]) => (
-                <li class="sp-score-item">
-                  <span class={`sp-tier-badge sp-tier-${score.toLowerCase()}`}>{score}</span>
-                  <span class="sp-score-text">{intent}</span>
-                </li>
-              ))}
+              <For each={intentScores()}>
+                {([intent, score, tier]) => (
+                  <li class="sp-score-item" role="listitem">
+                    <span class={`sp-tier-badge sp-tier-${(tier ?? "").toLowerCase()}`}>
+                      {tier} ({score})
+                    </span>
+                    <span class="sp-score-text">{intent}</span>
+                  </li>
+                )}
+              </For>
             </ul>
           </Show>
         </section>

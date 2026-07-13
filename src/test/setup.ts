@@ -1,40 +1,73 @@
-import '@testing-library/jest-dom';
-import { beforeAll, vi } from 'vitest';
+/**
+ * @module test/setup
+ * Global test setup for Vitest.
+ * Mocks all Tauri APIs so components can render without a native runtime.
+ */
+import "@testing-library/jest-dom";
+import { beforeAll, vi } from "vitest";
 
-// Mock ResizeObserver
+// Mock ResizeObserver (not available in jsdom)
 class MockResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
 }
 globalThis.ResizeObserver = MockResizeObserver;
 
-// Mock Tauri APIs
-vi.mock('@tauri-apps/api/core', () => ({
+// ─── Tauri API mocks ────────────────────────────────────────────────────────
+
+vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn().mockImplementation((cmd: string) => {
-    if (cmd === 'get_tabs') return Promise.resolve([]);
-    return Promise.resolve();
-  }),
-}));
-
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn().mockImplementation(() => {
-    return Promise.resolve(() => {}); // returns unlisten function
-  }),
-}));
-
-vi.mock('@tauri-apps/plugin-os', () => ({
-  platform: vi.fn().mockResolvedValue('macos'),
-}));
-
-// Mock Tauri IPC
-beforeAll(() => {
-  Object.defineProperty(window, '__TAURI_INTERNALS__', {
-    value: {
-      invoke: (cmd: string, _args: any) => {
-        if (cmd === 'get_tabs') return Promise.resolve([]);
-        return Promise.resolve();
-      }
+    switch (cmd) {
+      case "get_tabs":
+        return Promise.resolve([]);
+      case "get_api_key_status":
+        return Promise.resolve("");
+      case "health_check_all":
+        return Promise.resolve({});
+      case "get_hf_models":
+        return Promise.resolve([]);
+      case "get_openrouter_free_models":
+        return Promise.resolve([]);
+      default:
+        return Promise.resolve(undefined);
     }
+  }),
+}));
+
+vi.mock("@tauri-apps/api/event", () => ({
+  listen: vi.fn().mockImplementation(() => {
+    return Promise.resolve(() => {
+      // unlisten no-op
+    });
+  }),
+}));
+
+vi.mock("@tauri-apps/plugin-os", () => ({
+  platform: vi.fn().mockResolvedValue("macos"),
+}));
+
+vi.mock("@tauri-apps/plugin-shell", () => ({
+  open: vi.fn().mockResolvedValue(undefined),
+}));
+
+// ─── Global Tauri IPC shim ──────────────────────────────────────────────────
+
+beforeAll(() => {
+  Object.defineProperty(window, "__TAURI_INTERNALS__", {
+    value: {
+      invoke: (cmd: string, _args: unknown): Promise<unknown> => {
+        switch (cmd) {
+          case "get_tabs":
+            return Promise.resolve([]);
+          case "get_api_key_status":
+            return Promise.resolve("");
+          case "health_check_all":
+            return Promise.resolve({});
+          default:
+            return Promise.resolve(undefined);
+        }
+      },
+    },
   });
 });

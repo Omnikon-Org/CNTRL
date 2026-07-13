@@ -29,6 +29,9 @@ export const TabBar: Component = () => {
           <div
             class={`tab ${browserState.activeTabId === tab.id ? 'active' : ''}`}
             onClick={() => browserActions.setActiveTab(tab.id)}
+            role="tab"
+            tabindex={0}
+            aria-selected={browserState.activeTabId === tab.id}
             title={tab.title}
           >
             <div class="tab-content">
@@ -44,6 +47,8 @@ export const TabBar: Component = () => {
                 e.stopPropagation();
                 browserActions.closeTab(tab.id);
               }}
+              aria-label={`Close ${tab.title} tab`}
+              title="Close tab"
             >
               ×
             </button>
