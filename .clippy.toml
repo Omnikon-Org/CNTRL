@@ -1,0 +1,25 @@
+# .clippy.toml — CNTRL Browser
+# Applied when `cargo clippy` runs. All settings below are aligned with the
+# CI step: `cargo clippy --all-targets --all-features -- -D warnings`
+
+# Enforce a maximum complexity threshold; functions above this score must be
+# refactored. Clippy default is 25; we tighten to 20 for readability.
+cognitive-complexity-threshold = 20
+
+# Warn on functions/methods exceeding this many lines (bodies only).
+too-many-lines-threshold = 80
+
+# Allow a slightly higher argument count than the default (7) to accommodate
+# Tauri command signatures that inject State<> parameters.
+too-many-arguments-threshold = 8
+
+# Disallow trivially avoidable single-character binding names.
+single-char-binding-names-threshold = 0
+
+# Minimum number of arms before `match` style suggestions kick in.
+# Keep at Clippy default.
+matches-macro-without-const = false
+
+# Do not suggest `unimplemented!()` replacements for `todo!()` — we use
+# `todo!()` during active development and remove before merge.
+allow-print-in-tests = true

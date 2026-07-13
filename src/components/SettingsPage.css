@@ -528,3 +528,126 @@
     height: 28px;
   }
 }
+
+/* ── Health grid ────────────────────────────────────────────────────────── */
+.sp-health-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.sp-health-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.sp-health-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+
+.sp-health-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/** 6px status dot per the design spec */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.success {
+  background: var(--color-text-success);
+}
+
+.status-dot.error {
+  background: var(--color-text-danger);
+}
+
+.status-dot.processing {
+  background: var(--color-accent);
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Key fields ─────────────────────────────────────────────────────────── */
+.sp-key-field {
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.sp-key-field:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* ── Danger button ──────────────────────────────────────────────────────── */
+.sp-btn-danger {
+  background: transparent;
+  border: 0.5px solid var(--color-text-danger);
+  color: var(--color-text-danger);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: opacity 120ms ease-out;
+}
+
+.sp-btn-danger:hover {
+  opacity: 0.75;
+}
+
+/* ── Text helpers ───────────────────────────────────────────────────────── */
+.sp-text-success { color: var(--color-text-success); }
+.sp-text-danger  { color: var(--color-text-danger); }
+.sp-text-secondary { color: var(--color-text-secondary); }
+
+/* ── Model columns ──────────────────────────────────────────────────────── */
+.sp-model-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 560px) {
+  .sp-model-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sp-model-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sp-model-item {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  padding: 2px 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
