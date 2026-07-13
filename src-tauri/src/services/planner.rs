@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::intent::{IntentResult, IntentType};
+use serde::{Deserialize, Serialize};
 
 /// Represents a discrete action emitted by the planner.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,12 +38,16 @@ impl Planner {
             }
             IntentType::SystemCommand => {
                 if let Some(cmd) = intent.parameters.get("command") {
-                    steps.push(Step::BuiltinCommand { command: cmd.clone() });
+                    steps.push(Step::BuiltinCommand {
+                        command: cmd.clone(),
+                    });
                 }
             }
             IntentType::AiQuery => {
                 if let Some(query) = intent.parameters.get("query") {
-                    steps.push(Step::AiQuery { prompt: query.clone() });
+                    steps.push(Step::AiQuery {
+                        prompt: query.clone(),
+                    });
                 }
             }
             IntentType::SettingsAction => {

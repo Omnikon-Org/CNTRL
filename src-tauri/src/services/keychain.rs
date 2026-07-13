@@ -11,8 +11,8 @@
 //! `"sk-or-***"`) from the config layer; real keys are only fetched here
 //! immediately before use.
 
-use keyring::Entry;
 use crate::error::CntrlError;
+use keyring::Entry;
 
 /// The application-level service identifier used for all keychain entries.
 const APP_SERVICE: &str = "cntrl-browser";
@@ -149,10 +149,7 @@ mod tests {
         );
 
         // Verify it does NOT appear as plaintext anywhere near the service name
-        assert!(
-            !retrieved.is_empty(),
-            "retrieved secret must not be empty"
-        );
+        assert!(!retrieved.is_empty(), "retrieved secret must not be empty");
 
         // Delete
         delete_secret(test_key).expect("should delete secret");

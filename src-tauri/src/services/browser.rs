@@ -30,7 +30,7 @@ pub struct BrowserConfig {
 
 impl Default for BrowserConfig {
     fn default() -> Self {
-        Self { 
+        Self {
             user_agent: None,
             background_workers: 3,
             background_queue_capacity: 100,

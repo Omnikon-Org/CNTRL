@@ -12,7 +12,12 @@ pub struct BackgroundRuntime {
 }
 
 impl BackgroundRuntime {
-    pub fn new(app: AppHandle, browser: BrowserService, max_workers: usize, queue_capacity: usize) -> Self {
+    pub fn new(
+        app: AppHandle,
+        browser: BrowserService,
+        max_workers: usize,
+        queue_capacity: usize,
+    ) -> Self {
         let (sender, mut receiver) = mpsc::channel::<BackgroundTask>(queue_capacity);
         let semaphore = Arc::new(Semaphore::new(max_workers));
 

@@ -10,9 +10,9 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
+use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 use crate::error::CntrlError;
 use crate::services::keychain;
-use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 
 const HF_API_BASE: &str = "https://api-inference.huggingface.co/models";
 const HF_MODELS_LIST_URL: &str =

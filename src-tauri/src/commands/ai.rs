@@ -8,6 +8,8 @@ use std::collections::HashMap;
 
 use tauri::State;
 
+use crate::services::ai::huggingface::HuggingFaceProvider;
+use crate::services::ai::openrouter::OpenRouterProvider;
 use crate::services::ai::{
     router::{score_complexity, score_to_tier, Router},
     CompletionRequest, ProviderInfo,
@@ -15,8 +17,6 @@ use crate::services::ai::{
 use crate::services::keychain::{
     self, KEY_GEMINI, KEY_GROQ, KEY_HF_TOKEN, KEY_OPENAI_COMPAT, KEY_OPENROUTER, MASKED_SENTINEL,
 };
-use crate::services::ai::huggingface::HuggingFaceProvider;
-use crate::services::ai::openrouter::OpenRouterProvider;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Completion
@@ -127,7 +127,10 @@ pub async fn get_hf_models() -> Result<Vec<String>, String> {
 #[tauri::command]
 pub async fn get_openrouter_free_models() -> Result<Vec<String>, String> {
     let provider = OpenRouterProvider::new("meta-llama/llama-3-8b-instruct:free");
-    provider.fetch_free_models().await.map_err(|e| e.to_string())
+    provider
+        .fetch_free_models()
+        .await
+        .map_err(|e| e.to_string())
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,9 +140,7 @@ pub async fn get_openrouter_free_models() -> Result<Vec<String>, String> {
 /// Scores a list of intent strings and returns `(intent, score, tier)` tuples.
 /// Used by the Settings UI to demonstrate the router's behaviour.
 #[tauri::command]
-pub fn test_intent_router(
-    intents: Vec<String>,
-) -> Result<Vec<(String, u8, String)>, String> {
+pub fn test_intent_router(intents: Vec<String>) -> Result<Vec<(String, u8, String)>, String> {
     Ok(intents
         .into_iter()
         .map(|intent| {

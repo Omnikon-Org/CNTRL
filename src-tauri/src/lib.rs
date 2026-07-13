@@ -15,8 +15,8 @@ pub mod error;
 pub mod services;
 
 use services::ai::router::Router;
-use services::browser::BrowserService;
 use services::background::BackgroundRuntime;
+use services::browser::BrowserService;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -32,7 +32,7 @@ pub fn run() {
 
             let browser_instance = app.state::<BrowserService>().inner().clone();
             let config = browser_instance.get_browser_config();
-            
+
             let background_runtime = BackgroundRuntime::new(
                 app.handle().clone(),
                 browser_instance.clone(),
@@ -46,12 +46,12 @@ pub fn run() {
             // providers via the Settings UI; keys are stored/retrieved from the
             // OS keychain — never from config files.
             let router = Router::new(
-                "http://localhost:11434",       // ollama_url
-                "llama3",                       // ollama_model
+                "http://localhost:11434",              // ollama_url
+                "llama3",                              // ollama_model
                 "meta-llama/llama-3-8b-instruct:free", // openrouter model
                 "mistralai/Mistral-7B-Instruct-v0.2",  // hf model
-                None,                           // compat endpoint (user-configured)
-                None,                           // compat model
+                None,                                  // compat endpoint (user-configured)
+                None,                                  // compat model
             );
             app.manage(router);
 
@@ -62,9 +62,7 @@ pub fn run() {
             let handle_clone = handle.clone();
 
             handle.listen("tab-metadata", move |event: tauri::Event| {
-                if let Ok(data) =
-                    serde_json::from_str::<serde_json::Value>(event.payload())
-                {
+                if let Ok(data) = serde_json::from_str::<serde_json::Value>(event.payload()) {
                     if let (Some(id_str), Some(title), Some(favicon)) = (
                         data["id"].as_str(),
                         data["title"].as_str(),

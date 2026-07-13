@@ -1,9 +1,9 @@
-use tauri::{AppHandle, State};
-use crate::services::intent::IntentResult;
-use crate::services::planner::Planner;
-use crate::services::executor::Executor;
 use crate::services::ai::router::Router;
 use crate::services::browser::BrowserService;
+use crate::services::executor::Executor;
+use crate::services::intent::IntentResult;
+use crate::services::planner::Planner;
+use tauri::{AppHandle, State};
 
 #[tauri::command]
 pub async fn submit_intent(

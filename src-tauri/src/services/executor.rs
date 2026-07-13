@@ -1,16 +1,16 @@
-use serde::Serialize;
-use tauri::{AppHandle, Emitter, State};
-use std::process::Command;
+use super::planner::Step;
 use crate::services::ai::router::Router;
 use crate::services::ai::CompletionRequest;
-use super::planner::Step;
 use crate::services::browser::BrowserService;
+use serde::Serialize;
+use std::process::Command;
+use tauri::{AppHandle, Emitter, State};
 
 #[derive(Clone, Serialize)]
 pub struct StepStatusEvent {
     pub step_index: usize,
     pub total_steps: usize,
-    pub status: String,    // "Pending", "Running", "Done", "Failed"
+    pub status: String, // "Pending", "Running", "Done", "Failed"
     pub result_markdown: Option<String>,
 }
 
@@ -41,12 +41,15 @@ impl Executor {
             let result = match step {
                 Step::Navigate { url } => {
                     // Prepend https:// if not present
-                    let final_url = if url.starts_with("http://") || url.starts_with("https://") || url.starts_with("cntrl://") {
+                    let final_url = if url.starts_with("http://")
+                        || url.starts_with("https://")
+                        || url.starts_with("cntrl://")
+                    {
                         url.clone()
                     } else {
                         format!("https://{}", url)
                     };
-                    
+
                     if let Some(active_tab) = browser_service.active_tab_id() {
                         let _ = browser_service.navigate(app_handle, active_tab, final_url.clone());
                     } else {
@@ -64,12 +67,8 @@ impl Executor {
                         Err(e) => Err(e.to_string()),
                     }
                 }
-                Step::BuiltinCommand { command } => {
-                    Self::execute_builtin(&command).await
-                }
-                Step::DisplayResult { markdown } => {
-                    Ok(markdown)
-                }
+                Step::BuiltinCommand { command } => Self::execute_builtin(&command).await,
+                Step::DisplayResult { markdown } => Ok(markdown),
             };
 
             match result {
@@ -106,7 +105,8 @@ impl Executor {
     async fn execute_builtin(command: &str) -> Result<String, String> {
         match command {
             "bitcoin_price" => {
-                let url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
+                let url =
+                    "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
                 match reqwest::get(url).await {
                     Ok(resp) => {
                         if let Ok(json) = resp.json::<serde_json::Value>().await {
@@ -121,10 +121,7 @@ impl Executor {
             }
             "screenshot" => {
                 // Takes a screenshot interactively (MacOS)
-                let output = Command::new("screencapture")
-                    .arg("-i")
-                    .arg("-c")
-                    .output();
+                let output = Command::new("screencapture").arg("-i").arg("-c").output();
                 match output {
                     Ok(_) => Ok("Screenshot taken and copied to clipboard.".to_string()),
                     Err(e) => Err(format!("Failed to take screenshot: {}", e)),

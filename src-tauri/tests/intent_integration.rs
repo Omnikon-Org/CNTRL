@@ -13,7 +13,7 @@ fn test_navigation_intents() {
         let result = IntentResult::parse(input);
         assert_eq!(result.intent_type, IntentType::Navigation);
         assert!(result.parameters.contains_key("url"));
-        
+
         let plan = Planner::plan(result);
         assert_eq!(plan.len(), 2);
         assert!(matches!(plan[1], Step::Navigate { .. }));
@@ -31,7 +31,7 @@ fn test_search_intents() {
         let result = IntentResult::parse(input);
         assert_eq!(result.intent_type, IntentType::Search);
         assert!(result.parameters.contains_key("query"));
-        
+
         let plan = Planner::plan(result);
         assert_eq!(plan.len(), 2);
         assert!(matches!(plan[1], Step::Navigate { .. }));
@@ -53,7 +53,7 @@ fn test_system_command_intents() {
         let result = IntentResult::parse(input);
         assert_eq!(result.intent_type, IntentType::SystemCommand);
         assert_eq!(result.parameters.get("command").unwrap(), expected_cmd);
-        
+
         let plan = Planner::plan(result);
         assert_eq!(plan.len(), 1);
         if let Step::BuiltinCommand { command } = &plan[0] {
@@ -77,7 +77,7 @@ fn test_ai_query_intents() {
         let result = IntentResult::parse(input);
         assert_eq!(result.intent_type, IntentType::AiQuery);
         assert!(result.parameters.contains_key("query"));
-        
+
         let plan = Planner::plan(result);
         assert_eq!(plan.len(), 1);
         assert!(matches!(plan[0], Step::AiQuery { .. }));
@@ -86,15 +86,12 @@ fn test_ai_query_intents() {
 
 #[test]
 fn test_settings_intents() {
-    let intents = [
-        "settings",
-        "open settings",
-    ];
+    let intents = ["settings", "open settings"];
 
     for input in intents {
         let result = IntentResult::parse(input);
         assert_eq!(result.intent_type, IntentType::SettingsAction);
-        
+
         let plan = Planner::plan(result);
         assert_eq!(plan.len(), 2);
         if let Step::Navigate { url } = &plan[1] {
@@ -107,16 +104,13 @@ fn test_settings_intents() {
 
 #[test]
 fn test_macro_trigger_intents() {
-    let intents = [
-        "trigger macro morning_routine",
-        "run macro build_project",
-    ];
+    let intents = ["trigger macro morning_routine", "run macro build_project"];
 
     for input in intents {
         let result = IntentResult::parse(input);
         assert_eq!(result.intent_type, IntentType::MacroTrigger);
         assert!(result.parameters.contains_key("macro_id"));
-        
+
         let plan = Planner::plan(result);
         assert_eq!(plan.len(), 1);
         assert!(matches!(plan[0], Step::DisplayResult { .. }));
@@ -131,16 +125,13 @@ fn test_unknown_fallback_intents() {
     // We should fix the parse logic to actually return UnknownFallback for empty strings or gibberish.
     // Wait, the prompt says "unknown/fallback". In our parse, everything unknown is an AI query.
     // Let's create an explicit parser fallback for empty input.
-    let intents = [
-        "",
-        "   ",
-    ];
+    let intents = ["", "   "];
 
     for input in intents {
         let result = IntentResult::parse(input);
         // We need to update mod.rs to return UnknownFallback for empty strings
         assert_eq!(result.intent_type, IntentType::UnknownFallback);
-        
+
         let plan = Planner::plan(result);
         assert_eq!(plan.len(), 1);
         assert!(matches!(plan[0], Step::DisplayResult { .. }));
