@@ -47,7 +47,6 @@ export const TabBar: Component = () => {
                 e.stopPropagation();
                 browserActions.closeTab(tab.id);
               }}
-              aria-label={`Close ${tab.title} tab`}
               title="Close tab"
             >
               ×
