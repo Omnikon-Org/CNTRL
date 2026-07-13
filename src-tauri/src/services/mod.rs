@@ -9,6 +9,7 @@
 pub mod ai;
 pub mod browser;
 pub mod fallback;
+pub mod background;
 pub mod keychain;
 pub mod intent;
 pub mod planner;

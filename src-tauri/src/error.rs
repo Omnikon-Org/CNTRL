@@ -19,4 +19,7 @@ pub enum CntrlError {
 
     #[error("Keychain Error: {0}")]
     Keychain(String),
+
+    #[error("Background Task Error: {0}")]
+    Background(#[from] crate::services::background::error::BackgroundError),
 }

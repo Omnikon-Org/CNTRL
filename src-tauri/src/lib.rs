@@ -17,6 +17,7 @@ pub mod services;
 
 use services::ai::router::Router;
 use services::browser::BrowserService;
+use services::background::BackgroundRuntime;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -29,6 +30,17 @@ pub fn run() {
             // ── Browser service ────────────────────────────────────────────
             let browser_service = BrowserService::new();
             app.manage(browser_service);
+
+            let browser_instance = app.state::<BrowserService>().inner().clone();
+            let config = browser_instance.get_browser_config();
+            
+            let background_runtime = BackgroundRuntime::new(
+                app.handle().clone(),
+                browser_instance.clone(),
+                config.background_workers,
+                config.background_queue_capacity,
+            );
+            app.manage(background_runtime);
 
             // ── AI Router ─────────────────────────────────────────────────
             // The router is constructed with sensible defaults. Users configure
@@ -109,6 +121,7 @@ pub fn run() {
             commands::ai::get_hf_models,
             commands::ai::get_openrouter_free_models,
             commands::ai::test_intent_router,
+            commands::background::spawn_background_task,
             // Intent commands
             commands::intent::submit_intent,
         ])
