@@ -24,11 +24,17 @@ pub struct Tab {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrowserConfig {
     pub user_agent: Option<String>,
+    pub background_workers: usize,
+    pub background_queue_capacity: usize,
 }
 
 impl Default for BrowserConfig {
     fn default() -> Self {
-        Self { user_agent: None }
+        Self { 
+            user_agent: None,
+            background_workers: 3,
+            background_queue_capacity: 100,
+        }
     }
 }
 #[derive(Default)]
@@ -63,7 +69,16 @@ impl BrowserService {
         url: String,
         is_background: bool,
     ) -> Result<Uuid, CntrlError> {
-        let id = Uuid::new_v4();
+        self.open_tab_with_id(app, url, is_background, Uuid::new_v4())
+    }
+
+    pub fn open_tab_with_id<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        url: String,
+        is_background: bool,
+        id: Uuid,
+    ) -> Result<Uuid, CntrlError> {
         let label = format!("tab-{}", id);
 
         let tab = Tab {

@@ -2,3 +2,4 @@
 pub mod ai_router;
 pub mod browser;
 pub mod fallback;
+pub mod background;

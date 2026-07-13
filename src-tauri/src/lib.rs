@@ -7,6 +7,7 @@ pub mod services;
 
 use services::ai_router::AiRouter;
 use services::browser::BrowserService;
+use services::background::BackgroundRuntime;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -22,12 +23,23 @@ pub fn run() {
                 .unwrap_or_else(|_| PathBuf::from("."));
             let key_path = app_data.join(".cntrl_key");
 
-            app.manage(BrowserService::new());
-            app.manage(AiRouter::new(key_path));
+            let browser_service = BrowserService::new();
+            let config = browser_service.get_browser_config();
+            
+            let background_runtime = BackgroundRuntime::new(
+                app.handle().clone(),
+                browser_service.clone(),
+                config.background_workers,
+                config.background_queue_capacity,
+            );
 
-            let browser_service = app.state::<BrowserService>();
+            app.manage(browser_service);
+            app.manage(AiRouter::new(key_path));
+            app.manage(background_runtime);
+            
+            let browser_state = app.state::<BrowserService>();
             let handle = app.handle().clone();
-            let browser_service_clone = browser_service.inner().clone();
+            let browser_service_clone = browser_state.inner().clone();
             let handle_clone = handle.clone();
 
             handle.listen("tab-metadata", move |event: tauri::Event| {
@@ -81,6 +93,7 @@ pub fn run() {
             commands::ai::get_hf_models,
             commands::ai::get_openrouter_free_models,
             commands::ai::test_intent_router,
+            commands::background::spawn_background_task,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
