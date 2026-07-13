@@ -4,6 +4,8 @@ import { UrlBar } from "./components/UrlBar";
 import { WebView } from "./components/WebView";
 import { initAiStore } from "./stores/aiStore";
 import { browserActions, browserState } from "./stores/browserStore";
+import { CommandBar } from "./components/CommandBar";
+import { eventBus } from "./core/events";
 import "./App.css";
 
 function App() {
@@ -19,12 +21,10 @@ function App() {
 
       if (e.key === "t") {
         e.preventDefault();
-        browserActions.openTab("about:blank");
+        eventBus.emit("TAB_OPEN", "about:blank");
       } else if (e.key === "w") {
         e.preventDefault();
-        if (browserState.activeTabId) {
-          browserActions.closeTab(browserState.activeTabId);
-        }
+        eventBus.emit("TAB_CLOSE_ACTIVE");
       }
     };
 
