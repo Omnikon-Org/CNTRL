@@ -16,9 +16,7 @@ too-many-arguments-threshold = 8
 # Disallow trivially avoidable single-character binding names.
 single-char-binding-names-threshold = 0
 
-# Minimum number of arms before `match` style suggestions kick in.
-# Keep at Clippy default.
-matches-macro-without-const = false
+
 
 # Do not suggest `unimplemented!()` replacements for `todo!()` — we use
 # `todo!()` during active development and remove before merge.
