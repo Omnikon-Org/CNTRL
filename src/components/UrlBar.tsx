@@ -168,7 +168,7 @@ export const UrlBar: Component = () => {
             compat mode
           </span>
         )}
-        <button class="nav-btn" onClick={handleOpenExternal} title="Open in External Browser" aria-label="Open in external browser">
+        <button class="nav-btn" onClick={handleOpenExternal} title="Open in External Browser">
           <span>Open</span>
         </button>
         <button class="settings-icon-btn" onClick={handleOpenSettings} title="Settings" aria-label="Open settings">
