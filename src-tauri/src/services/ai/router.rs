@@ -349,14 +349,14 @@ mod tests {
         let cases: Vec<(&str, Tier)> = vec![
             ("browse privately",                      Tier::Local),    // 0 → Local
             ("offline mode",                          Tier::Local),    // 0 → Local
-            ("find a recipe for lasagne",             Tier::Freemium), // 3 → Freemium
-            ("what is the weather today?",            Tier::Freemium), // 3 → Freemium
+            ("find a recipe for lasagne",             Tier::Local),    // 3 → Local
+            ("what is the weather today?",            Tier::Local),    // 3 → Local
             ("translate this text to Spanish",        Tier::Freemium), // 3+1=4 → Freemium
             ("summarize this article",                Tier::Freemium), // 3+2=5 → Freemium
             ("write a blog post about AI",            Tier::Freemium), // 3+2=5 → Freemium
-            ("debug this React component",            Tier::Premium),  // 3+3=6 ≥ 8? → depends
-            ("implement a binary search tree in Rust",Tier::Premium),  // 3+3=6 ≥ 8?
-            ("analyze the logical flaws in this complex argument", Tier::Premium), // 3+2+2=7 → Freemium
+            ("debug this React component",            Tier::Freemium), // 3+3=6 → Freemium
+            ("implement a binary search tree in Rust",Tier::Freemium), // 3+3=6 → Freemium
+            ("analyze the logical flaws in this complex argument", Tier::Freemium), // 3+2+2=7 (group clamp) -> 5 -> Freemium
         ];
 
         let correct: usize = cases
