@@ -8,7 +8,6 @@
 //!
 //! No business logic lives here; all logic is in `services/`.
 
-use std::sync::Arc;
 use tauri::{Emitter, Listener, Manager};
 
 pub mod commands;

@@ -4,7 +4,7 @@ use std::process::Command;
 use crate::services::ai::router::Router;
 use crate::services::ai::CompletionRequest;
 use super::planner::Step;
-use crate::services::browser::BrowserStore;
+use crate::services::browser::BrowserService;
 
 #[derive(Clone, Serialize)]
 pub struct StepStatusEvent {
@@ -21,7 +21,7 @@ impl Executor {
         plan: Vec<Step>,
         app_handle: &AppHandle,
         router: &State<'_, Router>,
-        browser_store: &State<'_, BrowserStore>,
+        browser_service: &State<'_, BrowserService>,
     ) -> Result<String, String> {
         let total = plan.len();
         let mut final_output = String::new();
@@ -47,10 +47,10 @@ impl Executor {
                         format!("https://{}", url)
                     };
                     
-                    if let Some(active_tab) = browser_store.active_tab_id() {
-                        browser_store.navigate(active_tab, final_url.clone());
+                    if let Some(active_tab) = browser_service.active_tab_id() {
+                        let _ = browser_service.navigate(app_handle, active_tab, final_url.clone());
                     } else {
-                        browser_store.open_tab(final_url.clone());
+                        let _ = browser_service.open_tab(app_handle, final_url.clone(), false);
                     }
                     Ok(format!("Navigated to {}", final_url))
                 }
@@ -111,7 +111,7 @@ impl Executor {
                     Ok(resp) => {
                         if let Ok(json) = resp.json::<serde_json::Value>().await {
                             if let Some(price) = json["bitcoin"]["usd"].as_f64() {
-                                return Ok(format!("Current Bitcoin Price: **${:,.2}**", price));
+                                return Ok(format!("Current Bitcoin Price: **${:.2}**", price));
                             }
                         }
                         Err("Failed to parse Bitcoin price".to_string())

@@ -379,6 +379,9 @@ impl BrowserService {
     pub fn update_browser_config(&self, config: BrowserConfig) {
         *self.config.write() = config;
     }
+    pub fn active_tab_id(&self) -> Option<Uuid> {
+        self.state.read().active_tab_id
+    }
     pub fn update_metadata(
         &self,
         id: Uuid,
