@@ -22,159 +22,109 @@ CNTRL Browser is a lightweight, AI-driven autonomous browser built with Tauri (R
 - [ ] **Phase 6**: Background Agents & Macro Recorder
 - [ ] **Phase 7**: Design System, Plugin SDK & OSS Release
 
-## Getting Started
+## Running the project locally
 
-### Prerequisites
-- Node.js 20+
-- Rust stable toolchain
-- Tauri v2 prerequisites (OS-specific webview dev headers)
+This guide walks you through setting up and running the CNTRL browser locally for development.
 
-## Installing Prerequisites
+### 1. Prerequisites
 
-Before running the project locally, ensure all required tools are installed.
+Ensure you have the following prerequisites installed on your system:
 
-### Install Node.js(20+)
+#### Node.js (LTS, Node 18+ or 20+)
+- **Download**: [nodejs.org](https://nodejs.org/)
+- **Verify**: `node -v` and `npm -v`
 
-Download and install the latest LTS version of Node.js (version 20 or later):
+#### Rust (Stable toolchain)
+- **macOS / Linux installation**:
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
+- **Windows installation**: Download and run the installer from [rustup.rs](https://rustup.rs/).
+- **Verify**: `rustc --version` and `cargo --version`
 
-https://nodejs.org/
+#### Tauri v2 Prerequisites (OS-specific WebView libraries)
+Tauri relies on native platform WebViews, which require additional development libraries:
+- **macOS**: Install Xcode Command Line Tools:
+  ```bash
+  xcode-select --install
+  ```
+- **Linux**: Install development headers (e.g., `webkit2gtk`, `gtk3`, `appindicator` packages). For more detail, check the [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md) or follow the official [Tauri Prerequisites Guide](https://v2.tauri.app/start/prerequisites/).
+- **Windows**: Install the **Visual Studio Build Tools** (Microsoft C++ Build Tools) with the **"C++ build tools"** workload selected in the installer. This is required for linking the native Rust binary.
 
-Verify the installation:
-
-```bash
-node -v
-npm -v
-```
-
-### 2. Install Rust (Stable Toolchain)
-
-Install the Rust stable toolchain using Rustup.
-
-#### Linux / macOS
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-#### Windows
-
-Download Rustup from:
-
-https://rustup.rs/
-
-After installation, verify:
-
-```bash
-rustc --version
-cargo --version
-```
-
----
-
-### 3. Install Tauri CLI
-
-After installing Node.js and Rust, install the Tauri CLI:
-
+#### Tauri CLI (Optional, but useful)
+You can install the Tauri CLI toolchain globally via cargo:
 ```bash
 cargo install tauri-cli
 ```
+- **Verify**: `cargo tauri --version`
 
-Verify the installation:
+---
+
+### 2. Clone the Repository
+
+Clone the project repository and navigate into the folder:
 
 ```bash
-cargo tauri --version
+git clone https://github.com/Demon-Die/CNTRL.git
+cd CNTRL
 ```
 
 ---
 
-## Running the Project
+### 3. Install JavaScript Dependencies
 
-Follow these steps to start the application locally.
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Omnikon-Org/CNTRL.git
-cd CNTRL
-```
-
-### 2. Install project dependencies
+This project uses `npm` as its primary package manager (as verified by the `package-lock.json` lockfile). Run the following command in the project root:
 
 ```bash
 npm install
 ```
 
-### 3. Launch the development application
+---
+
+### 4. Running the Development Application
+
+Depending on what you are working on, you can run the app in one of two modes:
+
+#### Option A: Full Desktop Application (Recommended)
+This runs the full Tauri desktop environment, compiling the Rust backend and launching the native container:
 
 ```bash
 npm run tauri dev
 ```
 
----
-## Troubleshooting
-
-### Node.js version is too old
-
-Ensure you are using Node.js 20 or later.
+#### Option B: Frontend Web-Only Mode
+If you are only editing UI components/styling and do not need any Tauri native API functionality, you can run the standalone SolidJS/Vite development server:
 
 ```bash
-node -v
+npm run dev
 ```
+Open `http://localhost:1420/` in your browser.
 
 ---
 
-### Cargo command not found
+### Gotchas & Common Issues
 
-If Cargo is not recognized, restart your terminal after installing Rust.
-
-Verify the installation:
-
-```bash
-cargo --version
-```
-
----
-
-### Tauri CLI not found
-
-Install or reinstall the Tauri CLI:
-
-```bash
-cargo install tauri-cli
-```
-
-Verify:
-
-```bash
-cargo tauri --version
-```
+* **Windows Linker Error (`link.exe not found`)**
+  * **Symptom**: Compilation fails with `error: linker 'link.exe' not found`.
+  * **Fix**: Ensure Visual Studio Build Tools (or Visual Studio 2017+) is installed with the **"Desktop development with C++"** workload selected.
+* **Tauri APIs in Standard Web Browsers**
+  * **Symptom**: When running in Frontend Web-Only Mode (`npm run dev`), the browser console shows errors like `TypeError: Cannot read properties of undefined (reading 'invoke')`.
+  * **Fix**: This is expected because Tauri's bridge APIs are only available within the native desktop window. To use features relying on Tauri native APIs, start the app with `npm run tauri dev`.
+* **Cargo/Rust Command Not Found**
+  * **Symptom**: `cargo` or `rustc` is not recognized.
+  * **Fix**: Restart your terminal or system after installing Rust to ensure PATH variables are updated.
 
 ---
 
-### Missing WebView dependencies
+### Tested & Verified Environment
 
-Tauri requires platform-specific WebView dependencies.
+The setup instructions and commands have been successfully tested under the following environment:
+- **Operating System**: Windows 11 Home (64-bit)
+- **Node.js**: v24.13.1
+- **npm**: 11.8.0
+- **Rust (rustc/cargo)**: 1.96.1
+- **Vite**: v6.4.2
 
-Refer to the official Tauri prerequisites documentation:
-
-https://v2.tauri.app/start/prerequisites/
-
----
-
-### Additional Notes
-
-- Use the latest stable versions of Node.js and Rust whenever possible.
-- If you encounter dependency issues, delete the `node_modules` folder and run:
-
-```bash
-npm install
-```
-
-- If problems persist, ensure your Rust toolchain is up to date:
-
-```bash
-rustup update
-```
 
 ## Branching Model
 
