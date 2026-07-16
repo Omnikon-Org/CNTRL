@@ -59,3 +59,10 @@ We welcome contributions of all kinds — bug fixes, features, tests, and docume
 4. Open a Pull Request against **`main`** with a clear description.
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, code style requirements, and commit message conventions.
+## Continuous Integration (CI)
+
+A CI workflow automatically runs on all Pull Requests targeting `main` and `phase-1-scaffold`. It ensures:
+*   **Frontend Linting:** Validates TypeScript files using the project linter.
+*   **Rust Check:** Verifies backend compilation using `cargo check`.
+
+Please ensure your local environment builds and lints cleanly before submitting a PR!
