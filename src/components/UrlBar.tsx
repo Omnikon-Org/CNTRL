@@ -76,7 +76,7 @@ export const UrlBar: Component = () => {
         parsed.hostname = parsed.hostname.toLowerCase();
         url = parsed.toString();
       } catch {
-        // non-standard protocols like cntrl:// — leave url as-is
+        void 0;
       }
 
       setInputUrl(url);

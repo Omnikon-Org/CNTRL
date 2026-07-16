@@ -1,44 +1,19 @@
-/**
- * @module stores/aiStore
- * Reactive AI configuration state managed by a SolidJS store.
- * Types are imported from `../types` — do not redeclare them here.
- */
 import { invoke } from "@tauri-apps/api/core";
 import { createStore } from "solid-js/store";
 import type { IntentRouterResult, ModelConfig, ModelTier } from "../types";
-
 export type { ModelConfig, ModelTier, IntentRouterResult };
-
 export const [aiState, setAiState] = createStore<ModelConfig>({
   tier: "Freemium",
   openrouter_key: null,
   ollama_url: "http://localhost:11434",
   selected_model: "meta-llama/llama-3-8b-instruct:free",
 });
-
-/**
- * Initialises the AI store. Config is now provider-specific (each provider's
- * key lives in the OS keychain); this function is a no-op kept for call-site
- * compatibility.
- */
 export const initAiStore = async (): Promise<void> => {
-  // Keys are fetched per-provider from the OS keychain via get_api_key_status.
-  // Nothing to load into the global store.
+  
 };
-
-/**
- * Sends a one-shot completion request through the active AI provider.
- * @param prompt - The user's prompt text.
- * @returns The model's response string.
- */
 export const askAi = async (prompt: string): Promise<string> => {
   return invoke<string>("ask_ai", { prompt });
 };
-
-/**
- * Fetches the list of popular HuggingFace text-generation models.
- * @returns Array of model ID strings.
- */
 export const getHfModels = async (): Promise<string[]> => {
   try {
     return await invoke<string[]>("get_hf_models");
@@ -47,11 +22,6 @@ export const getHfModels = async (): Promise<string[]> => {
     return [];
   }
 };
-
-/**
- * Fetches the list of free models available on OpenRouter.
- * @returns Array of model ID strings.
- */
 export const getOpenRouterFreeModels = async (): Promise<string[]> => {
   try {
     return await invoke<string[]>("get_openrouter_free_models");
@@ -60,12 +30,6 @@ export const getOpenRouterFreeModels = async (): Promise<string[]> => {
     return [];
   }
 };
-
-/**
- * Tests the complexity-scoring router against an array of sample intents.
- * @param intents - Array of natural-language strings to score.
- * @returns Array of `[intent, score, tier_string]` tuples.
- */
 export const testIntentRouter = async (
   intents: string[]
 ): Promise<[string, number, string][]> => {
@@ -76,11 +40,6 @@ export const testIntentRouter = async (
     return [];
   }
 };
-
-/**
- * Performs a health check on all configured AI providers.
- * @returns Record mapping provider names to boolean health status.
- */
 export const healthCheckAll = async (): Promise<Record<string, boolean>> => {
   try {
     return await invoke<Record<string, boolean>>("health_check_all");

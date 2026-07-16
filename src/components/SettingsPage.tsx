@@ -1,12 +1,3 @@
-/**
- * @module components/SettingsPage
- * CNTRL Browser Settings Page.
- *
- * Allows the user to configure AI providers and inspect health status.
- * API keys are stored exclusively in the OS keychain via the Rust
- * `keychain` service — they are never written to localStorage, SQLite,
- * or any file. The UI only ever sees masked sentinels ("***stored***").
- */
 import {
   Component,
   For,
@@ -19,11 +10,7 @@ import { askAi, getHfModels, getOpenRouterFreeModels, healthCheckAll, testIntent
 import type { ProviderHealth } from "../types";
 import "./SettingsPage.css";
 import { browserActions } from "../stores/browserStore";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Icon components (inline SVG — no external deps)
-// ─────────────────────────────────────────────────────────────────────────────
-
+import { AuditViewer } from "./AuditViewer";
 const IconBot = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <rect width="18" height="10" x="3" y="11" rx="2" />
@@ -33,7 +20,6 @@ const IconBot = () => (
     <line x1="16" x2="16" y1="16" y2="16" />
   </svg>
 );
-
 const IconKey = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <circle cx="7.5" cy="15.5" r="5.5" />
@@ -48,7 +34,6 @@ const IconSparkles = () => (
     <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
   </svg>
 );
-
 const IconBoxes = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" />
@@ -59,14 +44,12 @@ const IconBoxes = () => (
     <path d="M12 8 7.26 5.15" /><path d="m12 8 4.74-2.85" /><path d="M12 13.5V8" />
   </svg>
 );
-
 const IconEye = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
-
 const IconEyeOff = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
@@ -75,27 +58,19 @@ const IconEyeOff = () => (
     <line x1="2" x2="22" y1="2" y2="22" />
   </svg>
 );
-
 const IconLoader = () => (
   <svg class="sp-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
     <path d="M21 12a9 9 0 1 1-6.219-8.56" />
   </svg>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Matches the Rust `(String, u8, String)` tuple from `test_intent_router`. */
 type IntentScore = [string, number, string];
 
-/** Provider key entry shown in the Authentication section. */
 interface ProviderKeyEntry {
   id: string;
   label: string;
   placeholder: string;
 }
-
 const PROVIDER_KEYS: ProviderKeyEntry[] = [
   { id: "openrouter", label: "OpenRouter API Key", placeholder: "sk-or-v1-…" },
   { id: "gemini",     label: "Google Gemini API Key", placeholder: "AIza…" },
@@ -103,46 +78,32 @@ const PROVIDER_KEYS: ProviderKeyEntry[] = [
   { id: "huggingface",label: "HuggingFace Token", placeholder: "hf_…" },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const SettingsPage: Component = () => {
-  // ── Key management ─────────────────────────────────────────────────────
-  /** Map of provider id → current input value (masked sentinel or real key). */
   const [keyInputs, setKeyInputs] = createSignal<Record<string, string>>({});
   const [showKeys, setShowKeys] = createSignal<Record<string, boolean>>({});
   const [keySaveStatus, setKeySaveStatus] = createSignal<Record<string, "idle" | "saving" | "saved" | "error">>({});
-
-  // ── Ollama config ──────────────────────────────────────────────────────
+  
   const [ollamaUrl, setOllamaUrl] = createSignal("http://localhost:11434");
   const [ollamaModel, setOllamaModel] = createSignal("llama3");
-
-  // ── AI test ────────────────────────────────────────────────────────────
   const [testPrompt, setTestPrompt] = createSignal("What is the capital of France?");
   const [testResponse, setTestResponse] = createSignal("");
   const [testIsError, setTestIsError] = createSignal(false);
   const [isTesting, setIsTesting] = createSignal(false);
-
-  // ── Intent router test ─────────────────────────────────────────────────
   const [intentScores, setIntentScores] = createSignal<IntentScore[]>([]);
   const [isScoring, setIsScoring] = createSignal(false);
-
   const [userAgent, setUserAgent] = createSignal("");
   const [isLoadingBrowserConfig] = createSignal(true);
-
-  // ── Model lists ────────────────────────────────────────────────────────
+  
   const [hfModels, setHfModels] = createSignal<string[]>([]);
   const [orModels, setOrModels] = createSignal<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = createSignal(false);
 
-  // ── Health checks ──────────────────────────────────────────────────────
+  const [privacyEnabled, setPrivacyEnabled] = createSignal(false);
+
   const [providerHealth, setProviderHealth] = createSignal<ProviderHealth[]>([]);
   const [isCheckingHealth, setIsCheckingHealth] = createSignal(false);
-
-  // ── Init ───────────────────────────────────────────────────────────────
+  
   onMount(async () => {
-    // Load key status for each provider (masked sentinel or empty)
     const statuses: Record<string, string> = {};
     for (const p of PROVIDER_KEYS) {
       try {
@@ -152,37 +113,44 @@ export const SettingsPage: Component = () => {
       }
     }
     setKeyInputs(statuses);
-
-    // Prefetch model lists
     setIsLoadingModels(true);
     const [hf, or_] = await Promise.allSettled([getHfModels(), getOpenRouterFreeModels()]);
     if (hf.status === "fulfilled") setHfModels(hf.value);
     if (or_.status === "fulfilled") setOrModels(or_.value);
     setIsLoadingModels(false);
+    
+    try {
+      const pEnabled = await invoke<boolean>("is_privacy_mode_enabled");
+      setPrivacyEnabled(pEnabled);
+    } catch (err) {
+      console.error("Failed to load privacy mode status:", err);
+    }
 
-    // Run initial health check
     await runHealthCheck();
   });
-
-  // ── Handlers ───────────────────────────────────────────────────────────
-
+  const handleTogglePrivacy = async (enabled: boolean) => {
+    setPrivacyEnabled(enabled);
+    try {
+      await invoke("set_privacy_mode", { enabled });
+    } catch (err) {
+      console.error("Failed to set privacy mode:", err);
+      setPrivacyEnabled(!enabled);
+    }
+  };
   const handleSaveBrowserConfig = async () => {
     try {
       await browserActions.updateBrowserConfig({
         user_agent: userAgent() || null,
       });
-      // Optionally show a temporary success state here
     } catch (err) {
       console.error("Failed to save browser config:", err);
     }
   };
-
   const handleSaveKey = async (providerId: string): Promise<void> => {
     const value = keyInputs()[providerId] ?? "";
     setKeySaveStatus((prev) => ({ ...prev, [providerId]: "saving" }));
     try {
       await invoke<void>("store_api_key", { provider: providerId, value });
-      // Re-fetch status to confirm
       const status = await invoke<string>("get_api_key_status", { provider: providerId });
       setKeyInputs((prev) => ({ ...prev, [providerId]: status }));
       setKeySaveStatus((prev) => ({ ...prev, [providerId]: "saved" }));
@@ -192,12 +160,10 @@ export const SettingsPage: Component = () => {
       setKeySaveStatus((prev) => ({ ...prev, [providerId]: "error" }));
     }
   };
-
   const handleDeleteKey = async (providerId: string): Promise<void> => {
     await invoke<void>("delete_api_key", { provider: providerId });
     setKeyInputs((prev) => ({ ...prev, [providerId]: "" }));
   };
-
   const handleTestAi = async (): Promise<void> => {
     setIsTesting(true);
     setTestResponse("");
@@ -212,7 +178,6 @@ export const SettingsPage: Component = () => {
       setIsTesting(false);
     }
   };
-
   const handleTestIntents = async (): Promise<void> => {
     setIsScoring(true);
     const sampleIntents = [
@@ -229,7 +194,6 @@ export const SettingsPage: Component = () => {
     ];
     try {
       const scores = await testIntentRouter(sampleIntents);
-      // The command now returns [intent, score, tier] tuples
       setIntentScores(scores as unknown as IntentScore[]);
     } catch (err) {
       console.error(err);
@@ -237,7 +201,6 @@ export const SettingsPage: Component = () => {
       setIsScoring(false);
     }
   };
-
   const runHealthCheck = async (): Promise<void> => {
     setIsCheckingHealth(true);
     try {
@@ -253,7 +216,6 @@ export const SettingsPage: Component = () => {
       setIsCheckingHealth(false);
     }
   };
-
   return (
     <div class="sp-page">
       <div class="sp-content">
@@ -264,14 +226,12 @@ export const SettingsPage: Component = () => {
             <p class="sp-subtitle">Configure AI providers and inspect connection health</p>
           </div>
         </header>
-
-        {/* ── Advanced Settings (Browser Config) ────────────────────────── */}
+        {}
         <section class="sp-card" aria-labelledby="advanced-heading">
           <div class="sp-card-header">
             <span class="sp-card-icon"><IconKey /></span>
             <h2 class="sp-card-title" id="advanced-heading">Advanced Settings</h2>
           </div>
-
           <div class="sp-field">
             <label class="sp-label" for="sp-user-agent">
               User Agent
@@ -298,14 +258,46 @@ export const SettingsPage: Component = () => {
             <p class="sp-hint">This User Agent will be applied to newly opened browser tabs.</p>
           </div>
         </section>
-
-        {/* ── Provider Health ──────────────────────────────────────────── */}
+        {}
+        <section class="sp-card" aria-labelledby="privacy-heading">
+          <div class="sp-card-header">
+            <span class="sp-card-icon"><IconEye /></span>
+            <h2 class="sp-card-title" id="privacy-heading">Privacy & Security</h2>
+          </div>
+          <div class="sp-field">
+            <div class="privacy-toggle-row">
+              <div>
+                <label class="sp-label" style="margin-bottom: 0.25rem;">
+                  Privacy Guard Mode
+                </label>
+                <p class="sp-hint">
+                  When enabled, all remote AI calls (Tier 2/3) are blocked. Only local Ollama (Tier 1) can be used.
+                </p>
+              </div>
+              <label class="privacy-switch">
+                <input
+                  type="checkbox"
+                  checked={privacyEnabled()}
+                  onChange={(e) => void handleTogglePrivacy(e.currentTarget.checked)}
+                />
+                <span class="privacy-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="sp-field" style="margin-top: 1rem;">
+            <label class="sp-label">Security Audit Log</label>
+            <p class="sp-hint">
+              A real-time, append-only record of AI interactions and keychain credential accesses.
+            </p>
+            <AuditViewer />
+          </div>
+        </section>
+        {}
         <section class="sp-card" aria-labelledby="health-heading">
           <div class="sp-card-header">
             <span class="sp-card-icon"><IconSparkles /></span>
             <h2 class="sp-card-title" id="health-heading">Provider Health</h2>
           </div>
-
           <div class="sp-health-grid" role="list" aria-label="Provider health status">
             <Show when={isCheckingHealth()} fallback={
               <Show when={providerHealth().length > 0} fallback={
@@ -333,7 +325,6 @@ export const SettingsPage: Component = () => {
               </div>
             </Show>
           </div>
-
           <div class="sp-row">
             <button
               id="sp-health-check-btn"
@@ -347,8 +338,7 @@ export const SettingsPage: Component = () => {
             </button>
           </div>
         </section>
-
-        {/* ── API Keys ─────────────────────────────────────────────────── */}
+        {}
         <section class="sp-card" aria-labelledby="auth-heading">
           <div class="sp-card-header">
             <span class="sp-card-icon"><IconKey /></span>
@@ -357,14 +347,12 @@ export const SettingsPage: Component = () => {
           <p class="sp-hint" style="margin-bottom: 1rem;">
             Keys are stored in the OS keychain — never on disk or in any database.
           </p>
-
           <For each={PROVIDER_KEYS}>
             {(entry) => {
               const inputId = `sp-key-${entry.id}`;
               const status = () => keySaveStatus()[entry.id] ?? "idle";
               const value = () => keyInputs()[entry.id] ?? "";
               const visible = () => showKeys()[entry.id] ?? false;
-
               return (
                 <div class="sp-field sp-key-field">
                   <label class="sp-label" for={inputId}>
@@ -425,8 +413,7 @@ export const SettingsPage: Component = () => {
             }}
           </For>
         </section>
-
-        {/* ── Ollama Config ─────────────────────────────────────────────── */}
+        {}
         <section class="sp-card" aria-labelledby="ollama-heading">
           <div class="sp-card-header">
             <span class="sp-card-icon"><IconBot /></span>
@@ -455,14 +442,12 @@ export const SettingsPage: Component = () => {
             />
           </div>
         </section>
-
-        {/* ── Model Lists ───────────────────────────────────────────────── */}
+        {}
         <section class="sp-card" aria-labelledby="models-heading">
           <div class="sp-card-header">
             <span class="sp-card-icon"><IconBoxes /></span>
             <h2 class="sp-card-title" id="models-heading">Available Models</h2>
           </div>
-
           <Show when={isLoadingModels()} fallback={
             <div class="sp-model-cols">
               <div>
@@ -495,14 +480,12 @@ export const SettingsPage: Component = () => {
             </div>
           </Show>
         </section>
-
-        {/* ── Test AI ───────────────────────────────────────────────────── */}
+        {}
         <section class="sp-card" aria-labelledby="test-heading">
           <div class="sp-card-header">
             <span class="sp-card-icon"><IconSparkles /></span>
             <h2 class="sp-card-title" id="test-heading">Test AI Connection</h2>
           </div>
-
           <div class="sp-field">
             <label class="sp-label" for="sp-test-prompt">Prompt</label>
             <input
@@ -514,7 +497,6 @@ export const SettingsPage: Component = () => {
               placeholder="Ask the AI a question…"
             />
           </div>
-
           <div class="sp-row">
             <button
               id="sp-test-ai-btn"
@@ -527,7 +509,6 @@ export const SettingsPage: Component = () => {
               {isTesting() ? "Testing…" : "Test AI"}
             </button>
           </div>
-
           <Show when={testResponse()}>
             <div class={`sp-response${testIsError() ? " sp-response-error" : ""}`} role="status">
               <div class="sp-response-label">
@@ -538,8 +519,7 @@ export const SettingsPage: Component = () => {
             </div>
           </Show>
         </section>
-
-        {/* ── Intent Router Diagnostics ─────────────────────────────────── */}
+        {}
         <section class="sp-card" aria-labelledby="router-heading">
           <div class="sp-card-header">
             <span class="sp-card-icon"><IconBoxes /></span>
@@ -559,7 +539,6 @@ export const SettingsPage: Component = () => {
               {isScoring() ? "Scoring…" : "Run Intent Test"}
             </button>
           </div>
-
           <Show when={intentScores().length > 0}>
             <ul class="sp-scores" role="list">
               <For each={intentScores()}>

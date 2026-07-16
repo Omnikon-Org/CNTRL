@@ -1,7 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 
-use crate::services::background::{BackgroundRuntime, BackgroundTask, BackgroundAction};
+use crate::services::background::{BackgroundAction, BackgroundRuntime, BackgroundTask};
 
 #[tauri::command]
 pub async fn spawn_background_task(
@@ -11,7 +11,7 @@ pub async fn spawn_background_task(
     background_runtime: State<'_, BackgroundRuntime>,
 ) -> Result<Uuid, String> {
     let id = Uuid::new_v4();
-    
+
     let mut actions = vec![BackgroundAction::Navigate(url)];
     if let Some(s) = script {
         actions.push(BackgroundAction::EvaluateJS(s));

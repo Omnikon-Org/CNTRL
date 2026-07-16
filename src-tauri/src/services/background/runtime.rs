@@ -12,7 +12,12 @@ pub struct BackgroundRuntime {
 }
 
 impl BackgroundRuntime {
-    pub fn new(app: AppHandle, browser: BrowserService, max_workers: usize, queue_capacity: usize) -> Self {
+    pub fn new(
+        app: AppHandle,
+        browser: BrowserService,
+        max_workers: usize,
+        queue_capacity: usize,
+    ) -> Self {
         let (sender, mut receiver) = mpsc::channel::<BackgroundTask>(queue_capacity);
         let semaphore = Arc::new(Semaphore::new(max_workers));
 
@@ -23,11 +28,8 @@ impl BackgroundRuntime {
                 let browser_clone = browser.clone();
 
                 tauri::async_runtime::spawn(async move {
-                    // Acquire worker slot
                     if let Ok(_permit) = sem.acquire().await {
-                        // Execute task (timeout and cleanup is handled inside execute_task)
                         let _ = execute_task(&app_clone, browser_clone, task).await;
-                        // Permit is released when _permit goes out of scope here
                     }
                 });
             }
