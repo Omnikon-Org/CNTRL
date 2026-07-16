@@ -23,14 +23,25 @@ export const CommandBar: Component = () => {
   const [input, setInput] = createSignal("");
   const [steps, setSteps] = createSignal<StepState[]>([]);
   const [isProcessing, setIsProcessing] = createSignal(false);
+  const [isPrivacyEnabled, setIsPrivacyEnabled] = createSignal(false);
   let inputRef: HTMLInputElement | undefined;
   let unlisten: UnlistenFn | undefined;
+
+  const checkPrivacyMode = async () => {
+    try {
+      const enabled = await invoke<boolean>("is_privacy_mode_enabled");
+      setIsPrivacyEnabled(enabled);
+    } catch (err) {
+      console.error("Failed to fetch privacy mode status:", err);
+    }
+  };
 
   onMount(async () => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setIsOpen(true);
+        void checkPrivacyMode();
         // Focus is handled by an effect or small timeout because of the DOM render tick
         setTimeout(() => inputRef?.focus(), 50);
       } else if (e.key === "Escape" && isOpen()) {
@@ -39,6 +50,8 @@ export const CommandBar: Component = () => {
       }
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
+    void checkPrivacyMode();
+
 
     unlisten = await listen<StepStatusEvent>("intent://step-status", (event) => {
       const payload = event.payload;
@@ -95,7 +108,7 @@ export const CommandBar: Component = () => {
   return (
     <Show when={isOpen()}>
       <div class="cmd-bar-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}>
-        <div class="cmd-bar">
+        <div class={`cmd-bar ${isPrivacyEnabled() ? "privacy-active" : ""}`}>
           <form class="cmd-bar-input-wrapper" onSubmit={handleSubmit}>
             <SparklesIcon />
             <input
@@ -109,6 +122,9 @@ export const CommandBar: Component = () => {
               autocomplete="off"
               spellcheck={false}
             />
+            <Show when={isPrivacyEnabled()}>
+              <span class="cmd-privacy-badge" title="Privacy mode active: remote AI blocked.">Privacy Active</span>
+            </Show>
           </form>
 
           <Show when={steps().length > 0}>

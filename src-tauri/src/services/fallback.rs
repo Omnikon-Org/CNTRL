@@ -86,9 +86,7 @@ pub async fn fetch_fallback_html<R: tauri::Runtime>(
         .args(["--eval", PLAYWRIGHT_SCRIPT, "--", url])
         .output()
         .await
-        .map_err(|e| {
-            CntrlError::Browser(format!("Failed to spawn Playwright subprocess: {e}"))
-        })?;
+        .map_err(|e| CntrlError::Browser(format!("Failed to spawn Playwright subprocess: {e}")))?;
 
     // Enforce our own timeout: if the process took too long the shell plugin
     // returns but we check the status code.
@@ -153,8 +151,11 @@ mod tests {
             .append(true)
             .open(&log_path)
             .expect("should open test log file");
-        writeln!(file, "[TEST] Playwright fallback activated for URL: {test_url}")
-            .expect("should write to test log");
+        writeln!(
+            file,
+            "[TEST] Playwright fallback activated for URL: {test_url}"
+        )
+        .expect("should write to test log");
         drop(file);
 
         let content = std::fs::read_to_string(&log_path).expect("should read test log");

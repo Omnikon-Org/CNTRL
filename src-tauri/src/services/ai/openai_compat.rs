@@ -10,9 +10,9 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
+use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 use crate::error::CntrlError;
 use crate::services::keychain;
-use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Wire types — standard OpenAI chat completions
@@ -169,10 +169,7 @@ mod tests {
 
     #[test]
     fn provider_metadata() {
-        let p = OpenAiCompatProvider::new(
-            "https://api.openai.com/v1/chat/completions",
-            "gpt-4o",
-        );
+        let p = OpenAiCompatProvider::new("https://api.openai.com/v1/chat/completions", "gpt-4o");
         assert_eq!(p.name(), "OpenAI-Compatible");
         assert_eq!(p.tier(), Tier::Premium);
     }

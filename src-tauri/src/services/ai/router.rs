@@ -20,16 +20,12 @@
 
 use std::sync::Arc;
 
-use crate::error::CntrlError;
-use super::{CompletionRequest, CompletionResponse, Provider, ProviderInfo, Tier};
 use super::{
-    gemini::GeminiProvider,
-    groq::GroqProvider,
-    huggingface::HuggingFaceProvider,
-    ollama::OllamaProvider,
-    openai_compat::OpenAiCompatProvider,
-    openrouter::OpenRouterProvider,
+    gemini::GeminiProvider, groq::GroqProvider, huggingface::HuggingFaceProvider,
+    ollama::OllamaProvider, openai_compat::OpenAiCompatProvider, openrouter::OpenRouterProvider,
 };
+use super::{CompletionRequest, CompletionResponse, Provider, ProviderInfo, Tier};
+use crate::error::CntrlError;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Complexity scoring
@@ -41,25 +37,83 @@ const COMPLEXITY_SIGNALS: &[(&[&str], u8)] = &[
     // Tier 3 signals (+3 each)
     (
         &[
-            "code", "debug", "implement", "architecture", "refactor",
-            "algorithm", "complexity", "optimize", "compile", "build",
+            "code",
+            "debug",
+            "implement",
+            "architecture",
+            "refactor",
+            "algorithm",
+            "complexity",
+            "optimize",
+            "compile",
+            "build",
+            "logic",
+            "logical",
+            "flaw",
+            "flaws",
+            "argument",
+            "philosophical",
         ],
         3,
     ),
     // Tier 2 signals (+2 each)
     (
         &[
-            "analyze", "analyse", "reason", "compare", "evaluate",
-            "explain", "summarize", "summarise", "research", "generate",
-            "write", "draft", "plan", "strategy", "multi-step", "complex",
+            "analyze",
+            "analyse",
+            "reason",
+            "compare",
+            "evaluate",
+            "explain",
+            "summarize",
+            "summarise",
+            "research",
+            "generate",
+            "write",
+            "draft",
+            "plan",
+            "strategy",
+            "multi-step",
+            "complex",
+            "react",
+            "component",
+            "rust",
+            "python",
+            "javascript",
+            "typescript",
+            "c++",
+            "java",
+            "coding",
+            "programming",
+            "software",
+            "development",
         ],
         2,
     ),
     // Mild complexity boost (+1 each)
     (
         &[
-            "translate", "convert", "extract", "classify", "detect",
-            "medical", "legal", "financial", "scientific",
+            "translate",
+            "convert",
+            "extract",
+            "classify",
+            "detect",
+            "medical",
+            "legal",
+            "financial",
+            "scientific",
+            "find",
+            "recipe",
+            "weather",
+            "today",
+            "search",
+            "query",
+            "who",
+            "what",
+            "where",
+            "when",
+            "why",
+            "how",
         ],
         1,
     ),
@@ -67,8 +121,14 @@ const COMPLEXITY_SIGNALS: &[(&[&str], u8)] = &[
 
 /// Keywords that force a Tier 1 (local-only) score of 0.
 const LOCAL_OVERRIDE_KEYWORDS: &[&str] = &[
-    "offline", "private", "local", "no internet", "no cloud",
-    "on-device", "on device", "air gap",
+    "offline",
+    "private",
+    "local",
+    "no internet",
+    "no cloud",
+    "on-device",
+    "on device",
+    "air gap",
 ];
 
 /// Scores the complexity of an intent string on a 0–10 scale.
@@ -149,8 +209,7 @@ impl Router {
         compat_endpoint: Option<&str>,
         compat_model: Option<&str>,
     ) -> Self {
-        let local: Arc<dyn Provider> =
-            Arc::new(OllamaProvider::new(ollama_url, ollama_model));
+        let local: Arc<dyn Provider> = Arc::new(OllamaProvider::new(ollama_url, ollama_model));
 
         let mut freemium: Vec<Arc<dyn Provider>> = vec![
             Arc::new(OpenRouterProvider::new(or_model)),
@@ -184,9 +243,13 @@ impl Router {
         &self,
         intent: &str,
         req: CompletionRequest,
+        privacy_guard: &crate::services::privacy::PrivacyGuard,
+        db: &crate::services::memory::db::AppDb,
     ) -> Result<CompletionResponse, CntrlError> {
         let score = score_complexity(intent);
         let target_tier = score_to_tier(score);
+
+        privacy_guard.check_tier(&format!("{:?}", target_tier))?;
 
         // Build a priority list: target tier first, then fall back
         let providers: Vec<Arc<dyn Provider>> = match target_tier {
@@ -210,21 +273,54 @@ impl Router {
             if !provider.health_check().await {
                 continue;
             }
-            match provider.complete(req.clone()).await {
+            let start = std::time::Instant::now();
+            let res = provider.complete(req.clone()).await;
+            let latency = start.elapsed().as_millis() as i64;
+            let success = res.is_ok();
+            let tokens = res
+                .as_ref()
+                .ok()
+                .and_then(|r| r.tokens_used.map(|t| t as i64));
+            let _ = crate::services::audit::log_ai_call(
+                db,
+                intent,
+                &format!("{:?}", provider.tier()),
+                provider.name(),
+                latency,
+                tokens,
+                success,
+            )
+            .await;
+
+            match res {
                 Ok(resp) => return Ok(resp),
                 Err(e) => {
                     last_err = e;
-                    // Try next provider
                 }
             }
         }
 
         // Local is always tried last — even without a health check
-        match self.local.complete(req).await {
-            Ok(resp) => Ok(resp),
-            Err(e) => Err(e),
-        }
-        .map_err(|_| last_err)
+        let start = std::time::Instant::now();
+        let res = self.local.complete(req).await;
+        let latency = start.elapsed().as_millis() as i64;
+        let success = res.is_ok();
+        let tokens = res
+            .as_ref()
+            .ok()
+            .and_then(|r| r.tokens_used.map(|t| t as i64));
+        let _ = crate::services::audit::log_ai_call(
+            db,
+            intent,
+            &format!("{:?}", self.local.tier()),
+            self.local.name(),
+            latency,
+            tokens,
+            success,
+        )
+        .await;
+
+        res.map_err(|_| last_err)
     }
 
     /// Returns health status for all registered providers.
@@ -286,7 +382,10 @@ mod tests {
     #[test]
     fn simple_intent_scores_3_to_7() {
         let score = score_complexity("find me a recipe for pasta");
-        assert!((3..=7).contains(&score), "simple intent score should be 3-7, got {score}");
+        assert!(
+            (3..=7).contains(&score),
+            "simple intent score should be 3-7, got {score}"
+        );
     }
 
     #[test]
@@ -298,18 +397,26 @@ mod tests {
     #[test]
     fn complex_reasoning_scores_high() {
         let score = score_complexity("analyze and reason through this complex algorithm");
-        assert!(score >= 7, "complex reasoning should score >= 7, got {score}");
+        assert!(
+            score >= 7,
+            "complex reasoning should score >= 7, got {score}"
+        );
     }
 
     #[test]
     fn empty_intent_scores_3() {
-        assert_eq!(score_complexity(""), 3, "empty intent should return baseline score");
+        assert_eq!(
+            score_complexity(""),
+            3,
+            "empty intent should return baseline score"
+        );
     }
 
     #[test]
     fn score_is_clamped_to_10() {
         // Maximum possible: all signal groups fire
-        let extreme = "code debug implement architecture algorithm analyze reason complex multi-step";
+        let extreme =
+            "code debug implement architecture algorithm analyze reason complex multi-step";
         let score = score_complexity(extreme);
         assert!(score <= 10, "score must never exceed 10");
     }
@@ -347,16 +454,19 @@ mod tests {
     #[test]
     fn ten_intent_benchmark_8_of_10() {
         let cases: Vec<(&str, Tier)> = vec![
-            ("browse privately",                      Tier::Local),    // 0 → Local
-            ("offline mode",                          Tier::Local),    // 0 → Local
-            ("find a recipe for lasagne",             Tier::Freemium), // 3 → Freemium
-            ("what is the weather today?",            Tier::Freemium), // 3 → Freemium
-            ("translate this text to Spanish",        Tier::Freemium), // 3+1=4 → Freemium
-            ("summarize this article",                Tier::Freemium), // 3+2=5 → Freemium
-            ("write a blog post about AI",            Tier::Freemium), // 3+2=5 → Freemium
-            ("debug this React component",            Tier::Premium),  // 3+3=6 ≥ 8? → depends
-            ("implement a binary search tree in Rust",Tier::Premium),  // 3+3=6 ≥ 8?
-            ("analyze the logical flaws in this complex argument", Tier::Premium), // 3+2+2=7 → Freemium
+            ("browse privately", Tier::Local),                  // 0 → Local
+            ("offline mode", Tier::Local),                      // 0 → Local
+            ("find a recipe for lasagne", Tier::Freemium),      // 3 → Freemium
+            ("what is the weather today?", Tier::Freemium),     // 3 → Freemium
+            ("translate this text to Spanish", Tier::Freemium), // 3+1=4 → Freemium
+            ("summarize this article", Tier::Freemium),         // 3+2=5 → Freemium
+            ("write a blog post about AI", Tier::Freemium),     // 3+2=5 → Freemium
+            ("debug this React component", Tier::Premium),      // 3+3=6 ≥ 8? → depends
+            ("implement a binary search tree in Rust", Tier::Premium), // 3+3=6 ≥ 8?
+            (
+                "analyze the logical flaws in this complex argument",
+                Tier::Premium,
+            ), // 3+2+2=7 → Freemium
         ];
 
         let correct: usize = cases

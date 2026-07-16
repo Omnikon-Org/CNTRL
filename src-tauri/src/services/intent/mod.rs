@@ -36,8 +36,14 @@ impl IntentResult {
             };
         }
 
-        if input_lower.starts_with("go to ") || input_lower.starts_with("navigate to ") || input_lower.starts_with("open ") {
-            let target = input_lower.replace("go to ", "").replace("navigate to ", "").replace("open ", "");
+        if input_lower.starts_with("go to ")
+            || input_lower.starts_with("navigate to ")
+            || input_lower.starts_with("open ")
+        {
+            let target = input_lower
+                .replace("go to ", "")
+                .replace("navigate to ", "")
+                .replace("open ", "");
             // exception for "open settings"
             if target.trim() == "settings" {
                 parameters.insert("action".to_string(), "open".to_string());
@@ -56,7 +62,9 @@ impl IntentResult {
         }
 
         if input_lower.starts_with("search for ") || input_lower.starts_with("google ") {
-            let target = input_lower.replace("search for ", "").replace("google ", "");
+            let target = input_lower
+                .replace("search for ", "")
+                .replace("google ", "");
             parameters.insert("query".to_string(), target.trim().to_string());
             return IntentResult {
                 intent_type: IntentType::Search,
@@ -65,7 +73,10 @@ impl IntentResult {
             };
         }
 
-        if input_lower.starts_with("bitcoin price") || input_lower.starts_with("btc price") || input_lower.starts_with("price of bitcoin") {
+        if input_lower.starts_with("bitcoin price")
+            || input_lower.starts_with("btc price")
+            || input_lower.starts_with("price of bitcoin")
+        {
             parameters.insert("command".to_string(), "bitcoin_price".to_string());
             return IntentResult {
                 intent_type: IntentType::SystemCommand,
@@ -102,7 +113,9 @@ impl IntentResult {
         }
 
         if input_lower.starts_with("trigger macro") || input_lower.starts_with("run macro") {
-            let target = input_lower.replace("trigger macro ", "").replace("run macro ", "");
+            let target = input_lower
+                .replace("trigger macro ", "")
+                .replace("run macro ", "");
             parameters.insert("macro_id".to_string(), target.trim().to_string());
             return IntentResult {
                 intent_type: IntentType::MacroTrigger,

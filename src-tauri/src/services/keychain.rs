@@ -12,11 +12,33 @@
 //! immediately before use.
 
 use keyring::Entry;
+use std::sync::OnceLock;
 
 use crate::error::CntrlError;
+use crate::services::memory::db::AppDb;
 
 /// The application-level service identifier used for all keychain entries.
-const APP_SERVICE: &str = "cntrl-browser";
+pub const APP_SERVICE: &str = "cntrl-browser";
+
+static DB_INSTANCE: OnceLock<AppDb> = OnceLock::new();
+
+/// Initialises the database reference used for credential access audit logging.
+pub fn init_audit_db(db: AppDb) {
+    let _ = DB_INSTANCE.set(db);
+}
+
+fn log_access(key: &str, access_type: &str) {
+    if let Some(db) = DB_INSTANCE.get() {
+        let db = db.clone();
+        let key = key.to_string();
+        let access_type = access_type.to_string();
+        tauri::async_runtime::spawn(async move {
+            let _ =
+                crate::services::audit::log_credential_access(&db, APP_SERVICE, &key, &access_type)
+                    .await;
+        });
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -31,6 +53,7 @@ const APP_SERVICE: &str = "cntrl-browser";
 /// # Errors
 /// Returns [`CntrlError::Keychain`] if the OS rejects the write.
 pub fn store_secret(key: &str, value: &str) -> Result<(), CntrlError> {
+    log_access(key, "write");
     let entry = Entry::new(APP_SERVICE, key)
         .map_err(|e| CntrlError::Keychain(format!("Failed to create keychain entry: {e}")))?;
     entry
@@ -47,6 +70,7 @@ pub fn store_secret(key: &str, value: &str) -> Result<(), CntrlError> {
 /// Returns [`CntrlError::Keychain`] if the entry does not exist or the OS
 /// refuses access (e.g. user denied Keychain access on macOS).
 pub fn retrieve_secret(key: &str) -> Result<String, CntrlError> {
+    log_access(key, "read");
     let entry = Entry::new(APP_SERVICE, key)
         .map_err(|e| CntrlError::Keychain(format!("Failed to create keychain entry: {e}")))?;
     entry
@@ -65,6 +89,7 @@ pub fn retrieve_secret(key: &str) -> Result<String, CntrlError> {
 /// Returns [`CntrlError::Keychain`] only on genuine OS-level errors (not
 /// "entry not found").
 pub fn delete_secret(key: &str) -> Result<(), CntrlError> {
+    log_access(key, "delete");
     let entry = Entry::new(APP_SERVICE, key)
         .map_err(|e| CntrlError::Keychain(format!("Failed to create keychain entry: {e}")))?;
     match entry.delete_credential() {
@@ -119,12 +144,10 @@ mod tests {
         let _ = delete_secret(test_key);
 
         // Store
-        let store_result = store_secret(test_key, test_value);
-        if store_result.is_err() {
+        if let Err(e) = store_secret(test_key, test_value) {
             // Keychain unavailable in this environment — skip gracefully
             eprintln!(
-                "Keychain unavailable ({}), skipping roundtrip test",
-                store_result.unwrap_err()
+                "Keychain unavailable ({e}), skipping roundtrip test"
             );
             return;
         }
@@ -137,10 +160,7 @@ mod tests {
         );
 
         // Verify it does NOT appear as plaintext anywhere near the service name
-        assert!(
-            !retrieved.is_empty(),
-            "retrieved secret must not be empty"
-        );
+        assert!(!retrieved.is_empty(), "retrieved secret must not be empty");
 
         // Delete
         delete_secret(test_key).expect("should delete secret");

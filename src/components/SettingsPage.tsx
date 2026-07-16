@@ -19,6 +19,7 @@ import { askAi, getHfModels, getOpenRouterFreeModels, healthCheckAll, testIntent
 import type { ProviderHealth } from "../types";
 import "./SettingsPage.css";
 import { browserActions } from "../stores/browserStore";
+import { AuditViewer } from "./AuditViewer";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icon components (inline SVG — no external deps)
@@ -136,6 +137,9 @@ export const SettingsPage: Component = () => {
   const [orModels, setOrModels] = createSignal<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = createSignal(false);
 
+  // ── Privacy mode ───────────────────────────────────────────────────────
+  const [privacyEnabled, setPrivacyEnabled] = createSignal(false);
+
   // ── Health checks ──────────────────────────────────────────────────────
   const [providerHealth, setProviderHealth] = createSignal<ProviderHealth[]>([]);
   const [isCheckingHealth, setIsCheckingHealth] = createSignal(false);
@@ -160,11 +164,30 @@ export const SettingsPage: Component = () => {
     if (or_.status === "fulfilled") setOrModels(or_.value);
     setIsLoadingModels(false);
 
+    // Load privacy mode status
+    try {
+      const pEnabled = await invoke<boolean>("is_privacy_mode_enabled");
+      setPrivacyEnabled(pEnabled);
+    } catch (err) {
+      console.error("Failed to load privacy mode status:", err);
+    }
+
     // Run initial health check
     await runHealthCheck();
   });
 
   // ── Handlers ───────────────────────────────────────────────────────────
+
+  const handleTogglePrivacy = async (enabled: boolean) => {
+    setPrivacyEnabled(enabled);
+    try {
+      await invoke("set_privacy_mode", { enabled });
+    } catch (err) {
+      console.error("Failed to set privacy mode:", err);
+      // rollback UI state on error
+      setPrivacyEnabled(!enabled);
+    }
+  };
 
   const handleSaveBrowserConfig = async () => {
     try {
@@ -296,6 +319,43 @@ export const SettingsPage: Component = () => {
               </button>
             </div>
             <p class="sp-hint">This User Agent will be applied to newly opened browser tabs.</p>
+          </div>
+        </section>
+
+        {/* ── Privacy & Security (Phase 5) ────────────────────────────── */}
+        <section class="sp-card" aria-labelledby="privacy-heading">
+          <div class="sp-card-header">
+            <span class="sp-card-icon"><IconEye /></span>
+            <h2 class="sp-card-title" id="privacy-heading">Privacy & Security</h2>
+          </div>
+
+          <div class="sp-field">
+            <div class="privacy-toggle-row">
+              <div>
+                <label class="sp-label" style="margin-bottom: 0.25rem;">
+                  Privacy Guard Mode
+                </label>
+                <p class="sp-hint">
+                  When enabled, all remote AI calls (Tier 2/3) are blocked. Only local Ollama (Tier 1) can be used.
+                </p>
+              </div>
+              <label class="privacy-switch">
+                <input
+                  type="checkbox"
+                  checked={privacyEnabled()}
+                  onChange={(e) => void handleTogglePrivacy(e.currentTarget.checked)}
+                />
+                <span class="privacy-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="sp-field" style="margin-top: 1rem;">
+            <label class="sp-label">Security Audit Log</label>
+            <p class="sp-hint">
+              A real-time, append-only record of AI interactions and keychain credential accesses.
+            </p>
+            <AuditViewer />
           </div>
         </section>
 

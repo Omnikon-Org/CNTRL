@@ -9,8 +9,8 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::CntrlError;
 use super::{CompletionRequest, CompletionResponse, Provider, Tier};
+use crate::error::CntrlError;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Wire types (private to this module)
@@ -144,7 +144,10 @@ mod tests {
         assert_eq!(json["prompt"], "Hello");
         assert_eq!(json["stream"], false);
         // `system` is skipped when None
-        assert!(json.get("system").is_none(), "system must be omitted when None");
+        assert!(
+            json.get("system").is_none(),
+            "system must be omitted when None"
+        );
     }
 
     #[test]
