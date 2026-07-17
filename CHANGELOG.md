@@ -1,40 +1,19 @@
 # Changelog
 
-All notable changes to the CNTRL Browser project will be documented in this file.
+All notable changes to the CNTRL (Vibe Browser) project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+## [0.1.0] - 2026-07-16
 
 ### Added
-- **Phase 4: Intent Layer & Command Bar**
-  - Built `services/intent` for natural language command parsing, supporting 7 core intents: `Navigation`, `Search`, `SystemCommand`, `AiQuery`, `MacroTrigger`, `SettingsAction`, and `UnknownFallback`.
-  - Built `services/planner` to transform parsed intents into an ordered execution plan (`Step` array).
-  - Built `services/executor` to run execution plans, featuring a live step-status feed via Tauri IPC events.
-  - Added support for built-in system commands: `bitcoin_price` (via CoinGecko), `screenshot` (native macOS), and `mute` (native macOS).
-  - Added `CommandBar.tsx`, a global Cmd+K triggered UI overlay to submit natural language intents and display live execution statuses.
-  - Added `marked` and `dompurify` dependencies for safe and robust markdown rendering in the Command Bar.
-  - Extracted SVGs from `UrlBar.tsx` into a new `Icons.tsx` component.
-  - Added 21 intent integration tests in `tests/intent_integration.rs` covering all 7 intent types.
+- **Phase 1: Foundation:** Project scaffolded with Tauri (Rust) and SolidJS. Added SQLite/LanceDB setup, core system schemas, and strict TypeScript/Clippy linters.
+- **Phase 2: Headless Browser Core:** Implemented an integrated Playwright-driven headless browser instance, capable of executing commands securely from the Tauri backend while avoiding unsafe iframe usage. Added sandboxed Chromium fallback for complex layouts.
+- **Phase 3: Secure Enclave & Memory:** Implemented AES-256-GCM encryption for all local databases. Stored API keys in the native OS Keychain (macOS/Windows/Linux). Created short-term and long-term memory retrieval systems (Habits, Fact Extraction).
+- **Phase 4: Intent Router & Planner:** Built a dynamic AI router supporting Local (Ollama), OpenRouter, Groq, and Hugging Face. Added `Planner` to decompose high-level intents into atomic steps.
+- **Phase 5: Executor & Audit Logging:** Implemented `Executor` to sequentially perform browser actions or system commands. Added full cryptographically-signed audit logging to trace all AI actions, with a user-facing Audit Viewer.
+- **Phase 6: Macros & Background Agents:** Introduced the `.vibe` macro format, allowing users to record, save, and schedule intent sequences via a visual recorder. Implemented a persistent background worker for running tasks without blocking the UI.
+- **Phase 7: Polish & Distribution:** Added Light Mode and a Unified Design System using CSS variables. Introduced a WebAssembly (Wasmtime) Sandbox stub for future safe plugin execution.
 
-- **Phase 3: Hybrid Brain & Model Router**
-  - Built a trait-based AI provider system (`services/ai/`).
-  - Added support for Tier 1 (Ollama), Tier 2 (Gemini, Groq, HuggingFace, OpenRouter), and Tier 3 (OpenAI-compatible) AI models.
-  - Created a complexity scorer to dynamically route queries to the most appropriate AI tier.
-  - Implemented secure API key storage using the OS-native keychain.
-  - Added a Settings UI with per-provider health checks and model selection.
-
-- **Phase 2: Webview Engine & Browser Chrome**
-  - Integrated native OS webviews per tab via `BrowserService`.
-  - Added tab lifecycle management (open, close, navigate, back, forward, reload) and keyboard shortcuts.
-  - Added Playwright-based headless fallback for WebKit-hostile websites, rendered in a sandboxed iframe.
-
-- **Phase 1: Project Scaffold & CI Pipeline**
-  - Initialized Tauri v2 + SolidJS + TypeScript monorepo.
-  - Set up full CI pipeline with `cargo clippy`, `cargo test`, `tsc`, `eslint`, and `vitest`.
-  - Configured `biome` for formatting and `thiserror` for global error handling in Rust.
-
-### Changed
-- Refactored `UrlBar.tsx` to streamline URL handling and remove inline SVGs.
-- Fixed residual TypeScript warnings (`TS6133` in `SettingsPage.tsx`).
+### Security
+- Remote execution is completely disabled in Privacy Mode.
+- All stored memories are encrypted on disk.
+- Audit logs maintain immutable records of AI behavior.

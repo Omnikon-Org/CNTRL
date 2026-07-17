@@ -1,0 +1,25 @@
+{
+  "vibe_version": "1",
+  "id": "11111111-1111-1111-1111-111111111111",
+  "name": "Morning Summary",
+  "description": "Reads the latest news headlines and summarizes them.",
+  "author": "CNTRL Examples",
+  "created_at": "2026-07-16T18:00:00Z",
+  "updated_at": "2026-07-16T18:00:00Z",
+  "steps": [
+    {
+      "intent": "Go to hacker news",
+      "delay_ms": 0
+    },
+    {
+      "intent": "Summarize the top 3 stories",
+      "delay_ms": 2000
+    }
+  ],
+  "triggers": [
+    {
+      "kind": "cron",
+      "cron": "0 8 * * 1-5"
+    }
+  ]
+}

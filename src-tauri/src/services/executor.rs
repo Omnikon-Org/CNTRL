@@ -104,6 +104,11 @@ impl Executor {
         Ok(final_output)
     }
 
+    /// Execute a built-in system command by name. Public so `agent.rs` can reuse it.
+    pub async fn execute_builtin_cmd(command: &str) -> Result<String, String> {
+        Self::execute_builtin(command).await
+    }
+
     async fn execute_builtin(command: &str) -> Result<String, String> {
         match command {
             "bitcoin_price" => {

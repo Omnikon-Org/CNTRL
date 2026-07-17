@@ -16,6 +16,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_keyring::init())
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             let app_data = app
                 .path()
@@ -66,6 +67,15 @@ pub fn run() {
                 None,
             );
             app.manage(router);
+
+            let scheduler = tauri::async_runtime::block_on(async {
+                services::scheduler::MacroScheduler::new().await
+            })
+            .expect("Failed to create macro scheduler");
+            app.manage(scheduler);
+
+            let recorder = services::recorder::Recorder::new();
+            app.manage(recorder);
 
             let browser_service_ref = app.state::<BrowserService>();
             let handle = app.handle().clone();
@@ -135,6 +145,17 @@ pub fn run() {
             commands::memory::get_recent_audit_log,
             commands::memory::get_audit_log_count,
             commands::memory::get_site_habits,
+            commands::macro_cmd::start_recording,
+            commands::macro_cmd::stop_recording,
+            commands::macro_cmd::cancel_recording,
+            commands::macro_cmd::is_recording,
+            commands::macro_cmd::capture_intent,
+            commands::macro_cmd::list_macros,
+            commands::macro_cmd::delete_macro,
+            commands::macro_cmd::run_macro_cmd,
+            commands::macro_cmd::schedule_macro,
+            commands::macro_cmd::unschedule_macro,
+            commands::macro_cmd::list_scheduled_macros,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

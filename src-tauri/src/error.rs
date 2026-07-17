@@ -23,6 +23,12 @@ pub enum CntrlError {
     #[error("Memory Error: {0}")]
     Memory(String),
 
+    #[error("Macro Error: {0}")]
+    Macro(String),
+
+    #[error("Plugin Error: {0}")]
+    Plugin(String),
+
     #[error("Background Task Error: {0}")]
     Background(#[from] crate::services::background::error::BackgroundError),
 }

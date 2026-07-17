@@ -21,9 +21,9 @@ CNTRL Browser is a lightweight, AI-driven autonomous browser built with Tauri (R
 | **Phase 2** | Webview Engine & Browser Chrome | ✅ Complete |
 | **Phase 3** | Hybrid Brain & Model Router | ✅ Complete |
 | **Phase 4** | Intent Layer & Command Bar | ✅ Complete |
-| **Phase 5** | Memory Engine & Security Layer | 🔲 Not started |
-| **Phase 6** | Background Agents & Macro Recorder | 🔲 Not started |
-| **Phase 7** | Design System, Plugin SDK & OSS Release | 🔲 Not started |
+| **Phase 5** | Memory Engine & Security Layer | ✅ Complete |
+| **Phase 6** | Background Agents & Macro Recorder | ✅ Complete |
+| **Phase 7** | Design System, Plugin SDK & OSS Release | ✅ Complete |
 
 ### Phase 1 — Project Scaffold & CI Pipeline
 Tauri v2 + SolidJS + TypeScript monorepo. Full CI pipeline: Clippy, rustfmt,
@@ -49,15 +49,15 @@ HuggingFace model list and inference.
 Natural language command classification into 7 intent types. Multi-step task
 planner and executor. Cmd+K command bar overlay with live step feed.
 
-### Phase 5 — Memory Engine & Security Layer *(planned)*
+### Phase 5 — Memory Engine & Security Layer
 SQLite via `sqlx` for task history and habits. LanceDB semantic recall.
 OS keychain audit log. Privacy mode blocking remote AI calls.
 
-### Phase 6 — Background Agents & Macro Recorder *(planned)*
+### Phase 6 — Background Agents & Macro Recorder
 Tokio background job queue. `.vibe` macro file format. Cron scheduling.
 OS notifications. Import/export and visual schedule picker.
 
-### Phase 7 — Design System, Plugin SDK & OSS Release *(planned)*
+### Phase 7 — Design System, Plugin SDK & OSS Release
 Full Mecha-Industrial design token application. Light mode toggle. WASM
 plugin sandbox. OSS documentation, example macros, release pipeline.
 
@@ -254,16 +254,3 @@ We welcome contributions of all kinds — bug fixes, features, tests, and docume
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, code style requirements, and commit message conventions.
 
 > **All pull requests must target `main`.** The `main` branch is protected – direct pushes are not allowed; every change goes through a reviewed PR that passes CI.
-
-## Documentation
-
-Additional documentation is available in the `docs` directory.
-
-- [Architecture](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Open Source Checklist](docs/OPEN_SOURCE_CHECKLIST.md)
-- [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md)
-
-## Contributing
-
-We welcome contributions of all kinds – bug fixes, features, tests, and documentation improvements.

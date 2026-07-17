@@ -132,6 +132,7 @@ pub fn score_to_tier(score: u8) -> Tier {
     }
 }
 
+#[derive(Clone)]
 pub struct Router {
     local: Arc<dyn Provider>,
     freemium: Vec<Arc<dyn Provider>>,

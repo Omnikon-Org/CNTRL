@@ -5,6 +5,7 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 import "./CommandBar.css";
 import { SparklesIcon } from "./Icons";
+import { macroState } from "../stores/macroStore";
 
 interface StepStatusEvent {
   step_index: number;
@@ -87,6 +88,15 @@ export const CommandBar: Component = () => {
 
     try {
       await invoke("submit_intent", { input: query });
+      
+      // Phase 6: If recording, capture this intent
+      if (macroState.isRecording) {
+        try {
+          await invoke("capture_intent", { intent: query });
+        } catch (captureErr) {
+          console.error("Failed to capture intent for macro:", captureErr);
+        }
+      }
     } catch (err) {
       console.error(err);
       setSteps([{ status: "Failed", result: String(err) }]);

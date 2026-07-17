@@ -45,6 +45,15 @@ arrow-array = "53"
 arrow-schema = "53"
 # Async stream utilities
 futures = "0.3"
+# Cron-based macro scheduling (Phase 6)
+tokio-cron-scheduler = { version = "0.13", features = ["signal"] }
+# OS notifications for macro events (Phase 6)
+tauri-plugin-notification = "2"
+# Home directory resolution for ~/.vibe/macros/ (Phase 6)
+dirs = "5"
+# WASM sandbox for plugin isolation (Phase 7)
+wasmtime = { version = "25", default-features = false, features = ["async", "cranelift"] }
+zip = "8.6.0"
 
 [dev-dependencies]
 # Enables mocking in unit tests for provider HTTP calls

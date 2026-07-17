@@ -11,6 +11,7 @@ import type { ProviderHealth } from "../types";
 import "./SettingsPage.css";
 import { browserActions } from "../stores/browserStore";
 import { AuditViewer } from "./AuditViewer";
+import { PluginManager } from "./PluginManager";
 const IconBot = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <rect width="18" height="10" x="3" y="11" rx="2" />
@@ -553,7 +554,10 @@ export const SettingsPage: Component = () => {
               </For>
             </ul>
           </Show>
+          <AuditViewer />
         </section>
+        
+        <PluginManager />
       </div>
     </div>
   );
