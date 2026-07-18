@@ -123,3 +123,69 @@ High-priority hardening areas:
 - Webview navigation restrictions.
 - Provider key storage.
 - Future autonomous action permissions.
+
+## Which file should I edit?
+
+The table below provides a quick reference for common development tasks.
+
+| Task                                    | File / Directory                      |
+| --------------------------------------- | ------------------------------------- |
+| Change the main application layout      | `src/App.tsx`                         |
+| Modify the URL bar                      | `src/components/UrlBar.tsx`           |
+| Update browser tabs                     | `src/components/TabBar.tsx`           |
+| Change the embedded webview behavior    | `src/components/WebView.tsx`          |
+| Update the Settings page                | `src/components/SettingsPage.tsx`     |
+| Modify browser state management         | `src/stores/browserStore.ts`          |
+| Update AI configuration state           | `src/stores/aiStore.ts`               |
+| Add or modify a Tauri command           | `src-tauri/src/commands/`             |
+| Change backend browser services         | `src-tauri/src/services/browser.rs`   |
+| Modify AI routing logic                 | `src-tauri/src/services/ai_router.rs` |
+| Update Tauri configuration              | `src-tauri/tauri.conf.json`           |
+| Change frontend dependencies or scripts | `package.json`                        |
+| Update Rust dependencies                | `src-tauri/Cargo.toml`                |
+| Replace application icons               | `src-tauri/icons/`                    |
+| Modify global design tokens             | `src/styles/tokens.css`               |
+
+## Common Development Commands
+
+```bash
+# Install frontend dependencies
+npm install
+
+# Start the development application
+npm run tauri dev
+
+# Run frontend tests
+npm test
+
+# Format Rust code
+cargo fmt
+
+# Run Rust tests
+cargo test
+```
+
+## Repository Layout
+
+```
+CNTRL/
+├── src/                  # SolidJS frontend
+│   ├── components/       # UI components
+│   ├── stores/           # Application state
+│   ├── styles/           # Shared styles
+│   └── assets/           # Frontend assets
+│
+├── src-tauri/            # Rust backend
+│   ├── src/
+│   │   ├── commands/     # Tauri commands
+│   │   ├── services/     # Backend services
+│   │   ├── lib.rs        # Backend initialization
+│   │   └── main.rs       # Application entry point
+│   ├── Cargo.toml
+│   └── tauri.conf.json
+│
+├── public/               # Static frontend assets
+├── package.json
+└── docs/
+
+```

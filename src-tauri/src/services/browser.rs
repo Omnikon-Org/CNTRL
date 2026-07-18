@@ -21,7 +21,22 @@ pub struct Tab {
     pub fallback_mode: bool,
     pub loaded: bool,
 }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BrowserConfig {
+    pub user_agent: Option<String>,
+    pub background_workers: usize,
+    pub background_queue_capacity: usize,
+}
 
+impl Default for BrowserConfig {
+    fn default() -> Self {
+        Self {
+            user_agent: None,
+            background_workers: 3,
+            background_queue_capacity: 100,
+        }
+    }
+}
 #[derive(Default)]
 pub struct BrowserState {
     pub tabs: Vec<Tab>,
@@ -31,6 +46,7 @@ pub struct BrowserState {
 #[derive(Clone)]
 pub struct BrowserService {
     state: Arc<RwLock<BrowserState>>,
+    config: Arc<RwLock<BrowserConfig>>,
 }
 
 impl Default for BrowserService {
@@ -43,6 +59,7 @@ impl BrowserService {
     pub fn new() -> Self {
         Self {
             state: Arc::new(RwLock::new(BrowserState::default())),
+            config: Arc::new(RwLock::new(BrowserConfig::default())),
         }
     }
 
@@ -52,7 +69,16 @@ impl BrowserService {
         url: String,
         is_background: bool,
     ) -> Result<Uuid, CntrlError> {
-        let id = Uuid::new_v4();
+        self.open_tab_with_id(app, url, is_background, Uuid::new_v4())
+    }
+
+    pub fn open_tab_with_id<R: tauri::Runtime>(
+        &self,
+        app: &tauri::AppHandle<R>,
+        url: String,
+        is_background: bool,
+        id: Uuid,
+    ) -> Result<Uuid, CntrlError> {
         let label = format!("tab-{}", id);
 
         let tab = Tab {
@@ -71,7 +97,6 @@ impl BrowserService {
                 .parse()
                 .unwrap_or_else(|_| "about:blank".parse().unwrap());
 
-            // Initialization scripts for Fix 2
             let init_script = r#"
                 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
                 document.addEventListener('DOMContentLoaded', () => {
@@ -84,9 +109,15 @@ impl BrowserService {
 
             let state_clone = self.state.clone();
             let id_clone = id;
-
+            let user_agent = {
+                let config = self.config.read();
+                config
+                    .user_agent
+                    .clone()
+                    .unwrap_or_else(|| CHROME_USER_AGENT.to_string())
+            };
             let builder = WebviewBuilder::new(&label, WebviewUrl::External(parsed_url))
-                .user_agent(CHROME_USER_AGENT)
+                .user_agent(&user_agent)
                 .initialization_script(init_script)
                 .on_page_load(move |webview, _payload| {
                     let mut state = state_clone.write();
@@ -121,7 +152,6 @@ impl BrowserService {
                 }
             }
 
-            // Spawn 10s timeout to trigger fallback
             let url_clone = url.clone();
             if !url_clone.starts_with("cntrl://") && url_clone != "about:blank" {
                 let state_clone2 = self.state.clone();
@@ -137,14 +167,13 @@ impl BrowserService {
                             );
                             t.fallback_mode = true;
                             if let Some(w) = app_clone.get_webview(&format!("tab-{}", id_clone)) {
-                                let _ = w.hide(); // Hide native webview so iframe can show
+                                let _ = w.hide();
                             }
                             let _ = app_clone.emit("tabs-updated", ());
                         }
                     }
                 });
             } else {
-                // Instantly mark internal pages as loaded
                 let mut state = self.state.write();
                 if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id) {
                     t.loaded = true;
@@ -158,7 +187,6 @@ impl BrowserService {
         if !is_background {
             let prev_active = state.active_tab_id;
             state.active_tab_id = Some(id);
-            // Hide previous active, show new
             if let Some(prev_id) = prev_active {
                 if let Some(w) = app.get_webview(&format!("tab-{}", prev_id)) {
                     let _ = w.hide();
@@ -205,7 +233,7 @@ impl BrowserService {
         let mut state = self.state.write();
         if let Some(tab) = state.tabs.iter_mut().find(|t| t.id == id) {
             tab.url = url.clone();
-            tab.fallback_mode = false; // Reset fallback
+            tab.fallback_mode = false;
             tab.loaded = false;
 
             if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
@@ -213,11 +241,10 @@ impl BrowserService {
                     let _ = w.hide();
                 } else if let Ok(parsed_url) = url.parse() {
                     let _ = w.navigate(parsed_url);
-                    let _ = w.show(); // Ensure native is visible again since fallback might have hidden it
+                    let _ = w.show();
                 }
             }
 
-            // Spawn timeout for navigation
             let url_clone = url.clone();
             if !url_clone.starts_with("cntrl://") && url_clone != "about:blank" {
                 let state_clone = self.state.clone();
@@ -340,7 +367,13 @@ impl BrowserService {
         }
         Ok(())
     }
+    pub fn get_browser_config(&self) -> BrowserConfig {
+        self.config.read().clone()
+    }
 
+    pub fn update_browser_config(&self, config: BrowserConfig) {
+        *self.config.write() = config;
+    }
     pub fn update_metadata(
         &self,
         id: Uuid,

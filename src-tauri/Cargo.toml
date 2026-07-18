@@ -27,8 +27,36 @@ uuid = { version = "1.23.1", features = ["v4", "serde"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 parking_lot = "0.12.5"
 tauri-plugin-shell = "2.3.5"
-tokio = { version = "1.52.1", features = ["time"] }
-reqwest = { version = "0.13.2", features = ["json"] }
+tokio = { version = "1.52.1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
 tauri-plugin-store = "2.4.2"
 tauri-plugin-os = "2"
+# OS keychain access (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+# Required for the Provider trait
+async-trait = "0.1"
+urlencoding = "2.1.3"
+# SQLite database for memory, habits, audit log, and preferences (Phase 5)
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite", "macros", "uuid", "chrono"] }
+lancedb = "0.31.0"
+tauri-plugin-keyring = "0.1.0"
+# Arrow types required for LanceDB RecordBatch construction
+arrow-array = "53"
+arrow-schema = "53"
+# Async stream utilities
+futures = "0.3"
+# Cron-based macro scheduling (Phase 6)
+tokio-cron-scheduler = { version = "0.13", features = ["signal"] }
+# OS notifications for macro events (Phase 6)
+tauri-plugin-notification = "2"
+# Home directory resolution for ~/.vibe/macros/ (Phase 6)
+dirs = "5"
+# WASM sandbox for plugin isolation (Phase 7)
+wasmtime = { version = "25", default-features = false, features = ["async", "cranelift"] }
+zip = "8.6.0"
 
+[dev-dependencies]
+# Enables mocking in unit tests for provider HTTP calls
+mockall = "0.13"
+# Temporary directories for in-memory DB tests
+tempfile = "3"

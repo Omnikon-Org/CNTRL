@@ -14,20 +14,18 @@
   --font-sans: system-ui, -apple-system, sans-serif;
 }
 
-:root[data-theme="light"] {
-  --color-bg-base: #f7f7f7;
-  --color-bg-panel: #ffffff;
-  --color-bg-elevated: #f1f1f1;
-  --color-border: #d9d9d9;
-  --color-border-active: #bdbdbd;
-  --color-accent: #e8a020;
-  --color-accent-dim: #c78b1c;
-  --color-text-primary: #1f1f1f;
-  --color-text-secondary: #5f5f5f;
-  --color-text-danger: #c62828;
-  --color-text-success: #2e7d32;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
-  --font-sans: system-ui, -apple-system, sans-serif;
+[data-theme="light"] {
+  --color-bg-base: #f9f9f9;
+  --color-bg-panel: #f0f0f0;
+  --color-bg-elevated: #ffffff;
+  --color-border: #d0d0d0;
+  --color-border-active: #b0b0b0;
+  --color-accent: #d88c0c;
+  --color-accent-dim: #f3d4a0;
+  --color-text-primary: #1c1c1c;
+  --color-text-secondary: #666666;
+  --color-text-danger: #d03030;
+  --color-text-success: #308c30;
 }
 
 .tab-bar {

@@ -1,4 +1,17 @@
-//! Services module - Core business logic decoupled from Tauri
-pub mod ai_router;
+pub mod agent;
+pub mod ai;
+pub mod audit;
+pub mod background;
 pub mod browser;
+pub mod executor;
 pub mod fallback;
+pub mod intent;
+pub mod keychain;
+pub mod macro_dir;
+pub mod macro_format;
+pub mod memory;
+pub mod planner;
+pub mod privacy;
+pub mod recorder;
+pub mod scheduler;
+pub mod plugin;
