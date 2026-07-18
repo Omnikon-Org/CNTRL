@@ -14,167 +14,210 @@ CNTRL Browser is a lightweight, AI-driven autonomous browser built with Tauri (R
   - Tier 3 (Precision): OpenAI-compatible endpoints (Claude, GPT-4o, etc.)
 
 ## 7-Phase Build Plan
-- [x] **Phase 1**: Project Scaffold & CI Pipeline
-- [x] **Phase 2**: Webview Engine & Browser Chrome (Native fallback architecture)
-- [x] **Phase 3**: Hybrid Brain & Model Router (Ollama/OpenRouter/HF integration)
-- [ ] **Phase 4**: Intent Layer & Command Bar (Natural Language Actions)
-- [ ] **Phase 5**: Memory Engine & Security Layer
-- [ ] **Phase 6**: Background Agents & Macro Recorder
-- [ ] **Phase 7**: Design System, Plugin SDK & OSS Release
 
-## Getting Started
+| Phase | Description | Status |
+|-------|-------------|--------|
+| **Phase 1** | Project Scaffold & CI Pipeline | ✅ Complete |
+| **Phase 2** | Webview Engine & Browser Chrome | ✅ Complete |
+| **Phase 3** | Hybrid Brain & Model Router | ✅ Complete |
+| **Phase 4** | Intent Layer & Command Bar | ✅ Complete |
+| **Phase 5** | Memory Engine & Security Layer | ✅ Complete |
+| **Phase 6** | Background Agents & Macro Recorder | ✅ Complete |
+| **Phase 7** | Design System, Plugin SDK & OSS Release | ✅ Complete |
+
+### Phase 1 — Project Scaffold & CI Pipeline
+Tauri v2 + SolidJS + TypeScript monorepo. Full CI pipeline: Clippy, rustfmt,
+`cargo test`, `tsc --noEmit`, ESLint, Vitest. Global error types via `thiserror`.
+Biome formatter. Strict TypeScript with `noUncheckedIndexedAccess` and
+`exactOptionalPropertyTypes`.
+
+### Phase 2 — Webview Engine & Browser Chrome
+Native OS webview per tab. `BrowserService` managing tab lifecycle (open, close,
+navigate, back, forward, reload). Tab bar with Cmd+T / Cmd+W / Cmd+Shift+T.
+URL bar with HTTPS lock icon and HTTP warning indicator. Playwright-based
+headless fallback for WebKit-hostile sites, rendered in a sandboxed iframe.
+
+### Phase 3 — Hybrid Brain & Model Router
+Trait-based provider system with per-provider files under `services/ai/`.
+Tier 1 (Ollama), Tier 2 (Gemini, Groq, HuggingFace, OpenRouter), Tier 3
+(generic OpenAI-compatible). Complexity scorer (0–10 int → tier mapping).
+All API keys stored in the OS keychain — zero plaintext secrets on disk.
+Settings UI with per-provider health indicators. OpenRouter free-model filter.
+HuggingFace model list and inference.
+
+### Phase 4 — Intent Layer & Command Bar
+Natural language command classification into 7 intent types. Multi-step task
+planner and executor. Cmd+K command bar overlay with live step feed.
+
+### Phase 5 — Memory Engine & Security Layer
+SQLite via `sqlx` for task history and habits. LanceDB semantic recall.
+OS keychain audit log. Privacy mode blocking remote AI calls.
+
+### Phase 6 — Background Agents & Macro Recorder
+Tokio background job queue. `.vibe` macro file format. Cron scheduling.
+OS notifications. Import/export and visual schedule picker.
+
+### Phase 7 — Design System, Plugin SDK & OSS Release
+Full Mecha-Industrial design token application. Light mode toggle. WASM
+plugin sandbox. OSS documentation, example macros, release pipeline.
+
+## Running the project locally
+
+[#running-the-project-locally](#running-the-project-locally)
 
 ### Prerequisites
-- Node.js 20+
-- Rust stable toolchain
-- Tauri v2 prerequisites (OS-specific webview dev headers)
 
-## Installing Prerequisites
+[#prerequisites](#prerequisites)
 
-Before running the project locally, ensure all required tools are installed.
+- **Node.js 20+** — <https://nodejs.org/>
+- **Rust (stable toolchain)** — <https://rustup.rs>
+- **Tauri v2 CLI** — installed via Cargo (see below)
+- **OS-specific Tauri v2 system dependencies** — see the [Installing OS dependencies](#installing-os-dependencies) section below
 
-### Install Node.js(20+)
+### Installing OS dependencies
 
-Download and install the latest LTS version of Node.js (version 20 or later):
+[#installing-os-dependencies](#installing-os-dependencies)
 
-https://nodejs.org/
-
-Verify the installation:
-
+#### macOS
 ```bash
-node -v
-npm -v
+xcode-select --install
 ```
 
-### 2. Install Rust (Stable Toolchain)
-
-Install the Rust stable toolchain using Rustup.
-
-#### Linux / macOS
-
+#### Linux (Debian/Ubuntu)
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-dev \
+build-essential \
+curl \
+wget \
+file \
+libxdo-dev \
+libssl-dev \
+libayatana-appindicator3-dev \
+librsvg2-dev
 ```
 
 #### Windows
 
-Download Rustup from:
+Tauri v2 needs a working C++ linker. You have two toolchain options:
 
-https://rustup.rs/
+- **MSVC (recommended, default on Windows):** install the [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select the **"Desktop development with C++"** workload. This provides `link.exe`, which the Rust compiler needs to produce the final binary.
+- **GNU (alternative):** if you'd rather avoid Visual Studio, use the GNU toolchain instead:
+  ```bash
+  rustup toolchain install stable-x86_64-pc-windows-gnu
+  rustup default stable-x86_64-pc-windows-gnu
+  ```
+  This requires MSYS2/MinGW-w64 on your `PATH`.
 
-After installation, verify:
+Also make sure [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) is installed (it ships by default on up-to-date Windows 11 systems).
 
-```bash
-rustc --version
-cargo --version
-```
+### Install the Tauri CLI
 
----
-
-### 3. Install Tauri CLI
-
-After installing Node.js and Rust, install the Tauri CLI:
-
-```bash
-cargo install tauri-cli
-```
-
-Verify the installation:
-
-```bash
-cargo tauri --version
-```
-
----
-
-## Running the Project
-
-Follow these steps to start the application locally.
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Omnikon-Org/CNTRL.git
-cd CNTRL
-```
-
-### 2. Install project dependencies
-
-```bash
-npm install
-```
-
-### 3. Launch the development application
-
-```bash
-npm run tauri dev
-```
-
----
-## Troubleshooting
-
-### Node.js version is too old
-
-Ensure you are using Node.js 20 or later.
-
-```bash
-node -v
-```
-
----
-
-### Cargo command not found
-
-If Cargo is not recognized, restart your terminal after installing Rust.
-
-Verify the installation:
-
-```bash
-cargo --version
-```
-
----
-
-### Tauri CLI not found
-
-Install or reinstall the Tauri CLI:
-
+[#install-the-tauri-cli](#install-the-tauri-cli)
 ```bash
 cargo install tauri-cli
 ```
 
 Verify:
-
 ```bash
 cargo tauri --version
 ```
 
----
+### 1. Clone the repository
 
-### Missing WebView dependencies
+[#1-clone-the-repository](#1-clone-the-repository)
+```bash
+git clone https://github.com/Omnikon-Org/CNTRL.git
+cd CNTRL
+```
 
-Tauri requires platform-specific WebView dependencies.
+### 2. Install JavaScript dependencies
 
-Refer to the official Tauri prerequisites documentation:
+[#2-install-javascript-dependencies](#2-install-javascript-dependencies)
 
-https://v2.tauri.app/start/prerequisites/
-
----
-
-### Additional Notes
-
-- Use the latest stable versions of Node.js and Rust whenever possible.
-- If you encounter dependency issues, delete the `node_modules` folder and run:
-
+The repo ships with a `package-lock.json`, so use npm:
 ```bash
 npm install
 ```
 
-- If problems persist, ensure your Rust toolchain is up to date:
+### 3. Run the app
 
+[#3-run-the-app](#3-run-the-app)
+
+**Full app (Tauri + SolidJS frontend, native window):**
 ```bash
-rustup update
+npm run tauri dev
 ```
+
+The first run will take noticeably longer, since Cargo has to compile the Rust backend from scratch.
+
+**Frontend only (skip the Rust/Tauri build):**
+
+If you just want to work on the SolidJS UI and don't need the native shell:
+```bash
+npm run dev
+```
+
+### Environment tested
+
+[#environment-tested](#environment-tested)
+
+- **OS:** Windows 11 Home
+- **Node.js:** v24.13.1
+- **Rust:** 1.96.1 (stable-x86_64-pc-windows-gnu)
+
+---
+
+## Troubleshooting
+
+[#troubleshooting](#troubleshooting)
+
+### Node.js version is too old
+
+Ensure you're on Node.js 20 or later:
+```bash
+node -v
+```
+
+### Cargo command not found
+
+Restart your terminal after installing Rust so `PATH` picks up Cargo.
+```bash
+cargo --version
+```
+
+### Tauri CLI not found
+```bash
+cargo install tauri-cli
+cargo tauri --version
+```
+
+### `link.exe` not found / MSVC linker error (Windows)
+
+This means the Visual Studio Build Tools' C++ workload isn't installed, or the install is incomplete. Reopen the Visual Studio Installer, confirm **"Desktop development with C++"** is checked, then restart your terminal. If you'd rather not install Visual Studio at all, switch to the GNU toolchain instead (see [Installing OS dependencies → Windows](#installing-os-dependencies) above).
+
+### Windows Smart App Control (SAC) blocks the app — `os error 4551`
+
+Windows Smart App Control blocks unsigned local binaries by default — this includes the debug binary that `npm run tauri dev` builds locally, since it isn't code-signed. If the app fails to launch with this error:
+
+- Check whether SAC is on: **Settings → Privacy & security → Windows Security → App & browser control → Smart App Control**. If it's on, you can turn it off — note that once disabled, SAC can only be re-enabled via a clean Windows reinstall, so treat this as a one-way decision.
+- Alternatively, develop inside a VM or a machine without SAC enabled, or sign the binary if you have a code-signing certificate available.
+
+### Missing WebView dependencies
+
+Refer to the official Tauri prerequisites documentation: <https://v2.tauri.app/start/prerequisites/>
+
+### Additional notes
+
+- Use the latest stable versions of Node.js and Rust where possible.
+- If you hit dependency issues, delete `node_modules` and reinstall:
+  ```bash
+  npm install
+  ```
+- If problems persist, update your Rust toolchain:
+  ```bash
+  rustup update
+  ```
 
 ## Branching Model
 
@@ -190,6 +233,15 @@ CNTRL Browser uses a straightforward OSS branching strategy:
 
 > **All pull requests must target `main`.** The `main` branch is protected — direct pushes are not allowed; every change goes through a reviewed PR that passes CI.
 
+## Documentation
+
+Additional documentation is available in the `docs` directory.
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Open Source Checklist](docs/OPEN_SOURCE_CHECKLIST.md)
+- [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md)
+- [Accessibility Guide](docs/ACCESSIBILITY.md)
 ## Contributing
 
 We welcome contributions of all kinds — bug fixes, features, tests, and documentation improvements.
@@ -200,3 +252,5 @@ We welcome contributions of all kinds — bug fixes, features, tests, and docume
 4. Open a Pull Request against **`main`** with a clear description.
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, code style requirements, and commit message conventions.
+
+> **All pull requests must target `main`.** The `main` branch is protected – direct pushes are not allowed; every change goes through a reviewed PR that passes CI.

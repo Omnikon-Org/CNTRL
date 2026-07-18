@@ -1,7 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 
-use crate::services::browser::{BrowserService, Tab};
+use crate::services::browser::{BrowserConfig, BrowserService, Tab};
 
 #[tauri::command]
 pub fn open_tab(
@@ -102,4 +102,19 @@ pub fn reload(
     browser_service: State<'_, BrowserService>,
 ) -> Result<(), String> {
     browser_service.reload(&app, id).map_err(|e| e.to_string())
+}
+#[tauri::command]
+pub fn get_browser_config(
+    browser_service: State<'_, BrowserService>,
+) -> Result<BrowserConfig, String> {
+    Ok(browser_service.get_browser_config())
+}
+
+#[tauri::command]
+pub fn update_browser_config(
+    config: BrowserConfig,
+    browser_service: State<'_, BrowserService>,
+) -> Result<(), String> {
+    browser_service.update_browser_config(config);
+    Ok(())
 }

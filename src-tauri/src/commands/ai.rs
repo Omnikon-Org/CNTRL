@@ -1,45 +1,121 @@
-use crate::services::ai_router::{AiRouter, ModelConfig};
+use std::collections::HashMap;
+
 use tauri::State;
 
+use crate::services::ai::huggingface::HuggingFaceProvider;
+use crate::services::ai::openrouter::OpenRouterProvider;
+use crate::services::ai::{
+    router::{score_complexity, score_to_tier, Router},
+    CompletionRequest, ProviderInfo,
+};
+use crate::services::keychain::{
+    self, KEY_GEMINI, KEY_GROQ, KEY_HF_TOKEN, KEY_OPENAI_COMPAT, KEY_OPENROUTER, MASKED_SENTINEL,
+};
+
 #[tauri::command]
-pub async fn ask_ai(prompt: String, ai_router: State<'_, AiRouter>) -> Result<String, String> {
-    ai_router.ask_model(prompt).await.map_err(|e| e.to_string())
+pub async fn ask_ai(
+    prompt: String,
+    context: Option<String>,
+    router: State<'_, Router>,
+    privacy_guard: State<'_, crate::services::privacy::PrivacyGuard>,
+    db: State<'_, crate::services::memory::db::AppDb>,
+) -> Result<String, String> {
+    let req = CompletionRequest {
+        prompt: prompt.clone(),
+        system: context,
+    };
+    router
+        .route(&prompt, req, &privacy_guard, &db)
+        .await
+        .map(|r| r.text)
+        .map_err(|e| e.to_string())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Key management (via OS keychain only — no plaintext in config)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Stores an API key in the OS keychain.
+///
+/// The `provider` parameter maps to one of the well-known keychain constants.
+/// If the value is the masked sentinel (`"***stored***"`), the call is a no-op
+/// so the UI can safely round-trip the masked value without overwriting the key.
+#[tauri::command]
+pub fn store_api_key(provider: String, value: String) -> Result<(), String> {
+    if value == MASKED_SENTINEL || value.is_empty() {
+        return Ok(());
+    }
+    let key = provider_to_keychain_key(&provider)?;
+    keychain::store_secret(key, &value).map_err(|e| e.to_string())
+}
+
+/// Returns whether a key is stored for the given provider (returns the masked
+/// sentinel if stored, empty string if not), so the UI can show "key is set".
+#[tauri::command]
+pub fn get_api_key_status(provider: String) -> Result<String, String> {
+    let key = provider_to_keychain_key(&provider)?;
+    if keychain::secret_exists(key) {
+        Ok(MASKED_SENTINEL.to_string())
+    } else {
+        Ok(String::new())
+    }
+}
+
+/// Deletes a stored API key from the OS keychain.
+#[tauri::command]
+pub fn delete_api_key(provider: String) -> Result<(), String> {
+    let key = provider_to_keychain_key(&provider)?;
+    keychain::delete_secret(key).map_err(|e| e.to_string())
+}
+
+fn provider_to_keychain_key(provider: &str) -> Result<&'static str, String> {
+    match provider {
+        "openrouter" => Ok(KEY_OPENROUTER),
+        "gemini" => Ok(KEY_GEMINI),
+        "groq" => Ok(KEY_GROQ),
+        "huggingface" => Ok(KEY_HF_TOKEN),
+        "openai_compat" => Ok(KEY_OPENAI_COMPAT),
+        other => Err(format!("Unknown provider: {other}")),
+    }
 }
 
 #[tauri::command]
-pub fn get_ai_config(ai_router: State<'_, AiRouter>) -> Result<ModelConfig, String> {
-    Ok(ai_router.get_config())
+pub async fn health_check_all(router: State<'_, Router>) -> Result<HashMap<String, bool>, String> {
+    let infos: Vec<ProviderInfo> = router.health_check_all().await;
+    Ok(infos.into_iter().map(|p| (p.name, p.healthy)).collect())
+}
+
+/// Returns detailed provider info (name, tier, health) for all providers.
+#[tauri::command]
+pub async fn get_available_providers(
+    router: State<'_, Router>,
+) -> Result<Vec<ProviderInfo>, String> {
+    Ok(router.health_check_all().await)
 }
 
 #[tauri::command]
-pub fn update_ai_config(config: ModelConfig, ai_router: State<'_, AiRouter>) -> Result<(), String> {
-    ai_router.update_config(config);
-    Ok(())
+pub async fn get_hf_models() -> Result<Vec<String>, String> {
+    let provider = HuggingFaceProvider::new("mistralai/Mistral-7B-Instruct-v0.2");
+    provider.fetch_model_list().await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn get_hf_models(ai_router: State<'_, AiRouter>) -> Result<Vec<String>, String> {
-    ai_router.fetch_hf_models().await.map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub async fn get_openrouter_free_models(
-    ai_router: State<'_, AiRouter>,
-) -> Result<Vec<String>, String> {
-    ai_router
-        .fetch_openrouter_free_models()
+pub async fn get_openrouter_free_models() -> Result<Vec<String>, String> {
+    let provider = OpenRouterProvider::new("meta-llama/llama-3-8b-instruct:free");
+    provider
+        .fetch_free_models()
         .await
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn test_intent_router(
-    intents: Vec<String>,
-    ai_router: State<'_, AiRouter>,
-) -> Result<Vec<(String, String)>, String> {
-    let scores = ai_router.score_sample_intents(intents);
-    Ok(scores
+pub fn test_intent_router(intents: Vec<String>) -> Result<Vec<(String, u8, String)>, String> {
+    Ok(intents
         .into_iter()
-        .map(|(intent, tier)| (intent, format!("{:?}", tier)))
+        .map(|intent| {
+            let score = score_complexity(&intent);
+            let tier = format!("{:?}", score_to_tier(score));
+            (intent, score, tier)
+        })
         .collect())
 }

@@ -1,0 +1,21 @@
+{
+  "vibe_version": "1",
+  "id": "33333333-3333-3333-3333-333333333333",
+  "name": "Browser Cleanup",
+  "description": "Closes all open tabs to free memory.",
+  "author": "CNTRL Examples",
+  "created_at": "2026-07-16T18:00:00Z",
+  "updated_at": "2026-07-16T18:00:00Z",
+  "steps": [
+    {
+      "intent": "Close all open tabs",
+      "delay_ms": 0
+    }
+  ],
+  "triggers": [
+    {
+      "kind": "cron",
+      "cron": "0 18 * * *"
+    }
+  ]
+}

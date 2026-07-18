@@ -14,6 +14,20 @@
   --font-sans: system-ui, -apple-system, sans-serif;
 }
 
+[data-theme="light"] {
+  --color-bg-base: #f9f9f9;
+  --color-bg-panel: #f0f0f0;
+  --color-bg-elevated: #ffffff;
+  --color-border: #d0d0d0;
+  --color-border-active: #b0b0b0;
+  --color-accent: #d88c0c;
+  --color-accent-dim: #f3d4a0;
+  --color-text-primary: #1c1c1c;
+  --color-text-secondary: #666666;
+  --color-text-danger: #d03030;
+  --color-text-success: #308c30;
+}
+
 .tab-bar {
   height: 38px;
   display: flex;

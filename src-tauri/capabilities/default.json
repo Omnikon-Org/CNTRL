@@ -4,6 +4,8 @@
   "description": "Capability for the main window",
   "windows": ["main"],
   "permissions": [
+    "notification:default",
+    "notification:allow-show",
     "core:default",
     "opener:default",
     "core:webview:default",
@@ -12,6 +14,7 @@
     "core:window:allow-unmaximize",
     "core:window:allow-close",
     "core:window:allow-is-maximized",
-    "os:allow-platform"
+    "os:allow-platform",
+    "shell:allow-open"
   ]
 }

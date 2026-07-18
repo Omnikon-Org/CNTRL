@@ -1,8 +1,5 @@
-//! Global Error Types for CNTRL Browser
-
 use thiserror::Error;
 
-/// Core error type used across the application.
 #[derive(Debug, Error)]
 pub enum CntrlError {
     #[error("Configuration Error: {0}")]
@@ -19,4 +16,19 @@ pub enum CntrlError {
 
     #[error("Keychain Error: {0}")]
     Keychain(String),
+
+    #[error("Database Error: {0}")]
+    Database(#[from] sqlx::Error),
+
+    #[error("Memory Error: {0}")]
+    Memory(String),
+
+    #[error("Macro Error: {0}")]
+    Macro(String),
+
+    #[error("Plugin Error: {0}")]
+    Plugin(String),
+
+    #[error("Background Task Error: {0}")]
+    Background(#[from] crate::services::background::error::BackgroundError),
 }

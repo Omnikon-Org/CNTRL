@@ -1,7 +1,7 @@
 import { Component, For, createSignal, onMount } from 'solid-js';
 import { platform } from '@tauri-apps/plugin-os';
 import { browserState, browserActions } from '../stores/browserStore';
-import { WindowControls } from './WindowControls';
+import { WindowControls } from '../stores/WindowControls';
 import './TabBar.css';
 
 export const TabBar: Component = () => {
@@ -29,6 +29,9 @@ export const TabBar: Component = () => {
           <div
             class={`tab ${browserState.activeTabId === tab.id ? 'active' : ''}`}
             onClick={() => browserActions.setActiveTab(tab.id)}
+            role="tab"
+            tabindex={0}
+            aria-selected={browserState.activeTabId === tab.id}
             title={tab.title}
           >
             <div class="tab-content">
@@ -44,6 +47,7 @@ export const TabBar: Component = () => {
                 e.stopPropagation();
                 browserActions.closeTab(tab.id);
               }}
+              title="Close tab"
             >
               ×
             </button>
