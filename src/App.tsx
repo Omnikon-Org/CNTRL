@@ -6,6 +6,7 @@ import { WebView } from "./components/WebView";
 import { initAiStore } from "./stores/aiStore";
 import { browserActions, browserState } from "./stores/browserStore";
 import { CommandBar } from "./components/CommandBar";
+import { eventBus } from "./core/events";
 import { MacroLibrary } from "./components/MacroLibrary";
 import { macroState, macroActions } from "./stores/macroStore";
 import "./App.css";
@@ -37,6 +38,10 @@ function App() {
 
       if (e.key === "t" && !e.shiftKey) {
         e.preventDefault();
+        eventBus.emit("TAB_OPEN", "about:blank");
+      } else if (e.key === "w") {
+        e.preventDefault();
+        eventBus.emit("TAB_CLOSE_ACTIVE");
         browserActions.openTab("about:blank");
       } else if (e.key === "T" && e.shiftKey) {
         e.preventDefault();

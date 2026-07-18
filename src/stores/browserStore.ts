@@ -1,6 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { createStore } from "solid-js/store";
+import { eventBus } from "../core/events";
+
+export interface Tab {
+  id: string;
+  url: string;
+  title: string;
+  favicon?: string;
+  is_background: boolean;
+  created_at: string;
+  fallback_mode: boolean;
+  loaded: boolean;
 import type { Tab } from "../types";
 export type { Tab };
 export interface BrowserConfig {
@@ -83,4 +94,25 @@ export const browserActions = {
   async updateBrowserConfig(config: BrowserConfig) {
     await invoke("update_browser_config", { config });
   },
+
+  async reopenLastTab() {
+    await invoke("reopen_last_tab");
+    await this.fetchTabs();
+  },
+};
+
+// Event Bus Subscriptions
+eventBus.on("TAB_OPEN_NEW", (payload: { url: string; isBackground?: boolean }) => {
+  void browserActions.openTab(payload.url, payload.isBackground);
+});
+
+eventBus.on("TAB_CLOSE_ACTIVE", () => {
+  if (browserState.activeTabId) {
+    void browserActions.closeTab(browserState.activeTabId);
+  }
+});
+
+eventBus.on("TAB_REOPEN_LAST", () => {
+  void browserActions.reopenLastTab();
+});
 };
