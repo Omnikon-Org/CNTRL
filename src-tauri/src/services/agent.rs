@@ -9,13 +9,10 @@ use tauri::{AppHandle, Emitter};
 use tauri_plugin_notification::NotificationExt;
 use tokio::time::{sleep, Duration};
 
-use crate::error::CntrlError;
 use crate::services::ai::router::Router;
 use crate::services::browser::BrowserService;
-use crate::services::executor::Executor;
 use crate::services::intent::IntentResult;
 use crate::services::macro_format::Vibemacro;
-use crate::services::memory::db::AppDb;
 use crate::services::planner::Planner;
 use crate::services::privacy::PrivacyGuard;
 
@@ -108,8 +105,6 @@ pub async fn run_macro(
 
         let plan = Planner::plan(intent);
 
-        // Wrap router/browser/privacy/db in tauri State-compatible form
-        use tauri::Manager;
         let router_ref: &Router = &router;
         // We use the State-less variant of execute by constructing references directly.
         let result = execute_plan_direct(plan, &app, router_ref, &browser, &privacy, &db).await;
@@ -188,7 +183,6 @@ async fn execute_plan_direct(
 ) -> Result<String, String> {
     use crate::services::planner::Step;
     use crate::services::ai::CompletionRequest;
-    use tauri::Emitter;
 
     let total = plan.len();
     let mut final_output = String::new();

@@ -23,7 +23,7 @@ pub fn run() {
                 .app_data_dir()
                 .expect("Failed to get app data dir");
             std::fs::create_dir_all(&app_data).expect("Failed to create app data dir");
-            let db_path = app_data.join("vibe-browser.db");
+            let db_path = app_data.join("cntrl-browser.db");
             let db_path_str = db_path.to_string_lossy();
 
             let db = tauri::async_runtime::block_on(async {

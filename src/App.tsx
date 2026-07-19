@@ -38,11 +38,10 @@ function App() {
 
       if (e.key === "t" && !e.shiftKey) {
         e.preventDefault();
-        eventBus.emit("TAB_OPEN", "about:blank");
+        eventBus.emit("TAB_OPEN_NEW", { url: "about:blank" });
       } else if (e.key === "w") {
         e.preventDefault();
         eventBus.emit("TAB_CLOSE_ACTIVE");
-        browserActions.openTab("about:blank");
       } else if (e.key === "T" && e.shiftKey) {
         e.preventDefault();
         browserActions.reopenLastTab();

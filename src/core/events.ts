@@ -9,35 +9,37 @@ export type EventKey = keyof EventMap;
 type EventCallback<T> = (payload: T) => void;
 
 class EventBus {
-  private listeners: {
-    [K in EventKey]?: Array<EventCallback<EventMap[K]>>;
-  } = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private listeners: Map<EventKey, Set<EventCallback<any>>> = new Map();
 
   /**
    * Subscribe to an event.
    */
   on<K extends EventKey>(event: K, callback: EventCallback<EventMap[K]>) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
     }
-    this.listeners[event]!.push(callback);
+    this.listeners.get(event)!.add(callback);
   }
 
   /**
    * Unsubscribe from an event.
    */
   off<K extends EventKey>(event: K, callback: EventCallback<EventMap[K]>) {
-    if (!this.listeners[event]) return;
-    this.listeners[event] = this.listeners[event]!.filter((cb) => cb !== callback);
+    const callbacks = this.listeners.get(event);
+    if (callbacks) {
+      callbacks.delete(callback);
+    }
   }
 
   /**
    * Emit an event to all subscribers.
    */
   emit<K extends EventKey>(event: K, ...args: EventMap[K] extends void ? [undefined?] : [EventMap[K]]) {
-    if (!this.listeners[event]) return;
+    const callbacks = this.listeners.get(event);
+    if (!callbacks) return;
     const payload = args[0] as EventMap[K];
-    this.listeners[event]!.forEach((cb) => {
+    callbacks.forEach((cb) => {
       try {
         cb(payload);
       } catch (err) {
