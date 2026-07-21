@@ -5,9 +5,9 @@
 // When the cron fires, the scheduler enqueues macro execution through
 // the existing `agent.rs` `MacroAgent`.
 
+use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::Mutex;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use uuid::Uuid;
 

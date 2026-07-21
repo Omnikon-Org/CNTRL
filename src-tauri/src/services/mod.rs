@@ -12,7 +12,7 @@ pub mod macro_dir;
 pub mod macro_format;
 pub mod memory;
 pub mod planner;
+pub mod plugin;
 pub mod privacy;
 pub mod recorder;
 pub mod scheduler;
-pub mod plugin;

@@ -31,7 +31,7 @@ export const PluginManager: Component = () => {
   const [plugins, setPlugins] = createSignal<PluginManifest[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
 
-  onMount(async () => {
+  onMount(() => {
     // In a real app, we would invoke a Tauri command to list loaded plugins
     // For the UI stub integration, we simulate fetching installed plugins.
     setTimeout(() => {

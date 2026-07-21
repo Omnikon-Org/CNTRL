@@ -21,7 +21,7 @@ export const MacroLibrary: Component<MacroLibraryProps> = (props) => {
     try {
       await macroActions.stopRecording(macroName());
       setMacroName("");
-    } catch (e) {
+    } catch {
       // Error handled by store, could show toast here
     }
   };

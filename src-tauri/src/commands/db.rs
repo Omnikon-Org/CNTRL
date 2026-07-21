@@ -44,10 +44,7 @@ pub fn db_get_bookmarks(db: State<'_, DbService>) -> Result<Vec<BookmarkEntry>, 
 }
 
 #[tauri::command]
-pub fn db_save_session(
-    tabs: Vec<TabSessionInput>,
-    db: State<'_, DbService>,
-) -> Result<(), String> {
+pub fn db_save_session(tabs: Vec<TabSessionInput>, db: State<'_, DbService>) -> Result<(), String> {
     db.save_session(tabs).map_err(|e| e.to_string())
 }
 

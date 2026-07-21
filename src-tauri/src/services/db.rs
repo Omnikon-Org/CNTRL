@@ -185,9 +185,8 @@ impl DbService {
             params![url, title, created_at],
         )?;
 
-        let mut stmt = conn.prepare(
-            "SELECT id, url, title, created_at FROM bookmarks WHERE url = ?1",
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT id, url, title, created_at FROM bookmarks WHERE url = ?1")?;
         let entry = stmt.query_row(params![url], |row| {
             Ok(BookmarkEntry {
                 id: row.get(0)?,
