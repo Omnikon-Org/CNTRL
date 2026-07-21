@@ -54,7 +54,7 @@ pub fn list_macros() -> Result<Vec<Vibemacro>, CntrlError> {
     }
 
     // Sort by creation time, newest first
-    macros.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    macros.sort_by_key(|b| std::cmp::Reverse(b.created_at));
     Ok(macros)
 }
 
