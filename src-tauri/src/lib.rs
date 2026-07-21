@@ -44,6 +44,11 @@ pub fn run() {
             app.manage(db);
             app.manage(privacy_guard);
 
+            // ── Phase 5 SQLite Database service ─────────────────────────────
+            let sqlite_db_path = app_data.join("cntrl.sqlite");
+            let db_service = services::db::DbService::new(&sqlite_db_path)
+                .expect("failed to initialize SQLite database");
+            app.manage(db_service);
             let browser_service = BrowserService::new();
             app.manage(browser_service);
 
@@ -156,6 +161,14 @@ pub fn run() {
             commands::macro_cmd::schedule_macro,
             commands::macro_cmd::unschedule_macro,
             commands::macro_cmd::list_scheduled_macros,
+            // Database commands
+            commands::db::db_add_history_entry,
+            commands::db::db_get_history,
+            commands::db::db_add_bookmark,
+            commands::db::db_remove_bookmark,
+            commands::db::db_get_bookmarks,
+            commands::db::db_save_session,
+            commands::db::db_restore_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

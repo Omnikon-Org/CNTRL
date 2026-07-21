@@ -31,4 +31,7 @@ pub enum CntrlError {
 
     #[error("Background Task Error: {0}")]
     Background(#[from] crate::services::background::error::BackgroundError),
+
+    #[error("Database Error: {0}")]
+    Database(#[from] rusqlite::Error),
 }
