@@ -5,3 +5,9 @@ export type {
   ProviderHealth,
   IntentRouterResult,
 } from "./ai";
+export type {
+  HistoryEntry,
+  BookmarkEntry,
+  TabSessionEntry,
+  TabSessionInput,
+} from "./db";

@@ -22,9 +22,12 @@ function App() {
   onMount(async () => {
     await initAiStore();
     await macroActions.init();
-    await browserActions.fetchTabs();
-    if (browserState.tabs.length === 0) {
-      await browserActions.openTab("https://google.com");
+    const restored = await browserActions.restoreSession();
+    if (!restored) {
+      await browserActions.fetchTabs();
+      if (browserState.tabs.length === 0) {
+        await browserActions.openTab("https://google.com");
+      }
     }
 
     const unlistenCmdW = await listen<null>("cmd-w", () => {

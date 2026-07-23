@@ -12,8 +12,8 @@ use crate::services::macro_format::Vibemacro;
 
 /// Returns the canonical macros directory path, creating it if absent.
 pub fn macros_dir() -> Result<PathBuf, CntrlError> {
-    let home = dirs::home_dir()
-        .ok_or_else(|| CntrlError::Macro("Cannot locate home directory".into()))?;
+    let home =
+        dirs::home_dir().ok_or_else(|| CntrlError::Macro("Cannot locate home directory".into()))?;
     let dir = home.join(".vibe").join("macros");
     fs::create_dir_all(&dir)?;
     Ok(dir)
@@ -54,7 +54,7 @@ pub fn list_macros() -> Result<Vec<Vibemacro>, CntrlError> {
     }
 
     // Sort by creation time, newest first
-    macros.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    macros.sort_by_key(|b| std::cmp::Reverse(b.created_at));
     Ok(macros)
 }
 
@@ -93,7 +93,5 @@ pub fn get_macro(macro_id: &str) -> Result<Vibemacro, CntrlError> {
             }
         }
     }
-    Err(CntrlError::Macro(format!(
-        "Macro '{macro_id}' not found"
-    )))
+    Err(CntrlError::Macro(format!("Macro '{macro_id}' not found")))
 }

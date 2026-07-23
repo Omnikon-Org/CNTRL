@@ -7,7 +7,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { createStore } from "solid-js/store";
 import { eventBus } from "../core/events";
-import type { Tab } from "../types";
+import type { Tab, TabSessionEntry, TabSessionInput } from "../types";
 
 export type { Tab };
 
@@ -27,6 +27,34 @@ void listen("tabs-updated", () => {
 
 const closedTabsStack: string[] = [];
 
+let saveSessionTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function saveSessionDebounced(): void {
+  if (saveSessionTimer) {
+    clearTimeout(saveSessionTimer);
+  }
+  saveSessionTimer = setTimeout(() => {
+    saveSessionTimer = null;
+    const tabInputs: TabSessionInput[] = browserState.tabs
+      .filter((t) => !t.is_background)
+      .map((t, idx) => ({
+        url: t.url,
+        position: idx,
+        is_active: t.id === browserState.activeTabId,
+        title: t.title,
+      }));
+    invoke("db_save_session", { tabs: tabInputs }).catch((err) => {
+      console.error("Failed to save tab session:", err);
+    });
+  }, 500);
+}
+
+function recordHistoryIfValid(url: string, title?: string): void {
+  if (url && url !== "about:blank" && !url.startsWith("cntrl://")) {
+    invoke("db_add_history_entry", { url, title: title ?? null }).catch(() => {});
+  }
+}
+
 export const browserActions = {
   /**
    * Fetch latest tab list from Rust service.
@@ -42,6 +70,7 @@ export const browserActions = {
     } else {
       setBrowserState("activeTabId", null);
     }
+    saveSessionDebounced();
   },
 
   /**
@@ -53,6 +82,8 @@ export const browserActions = {
     if (!isBackground) {
       setBrowserState("activeTabId", id);
     }
+    recordHistoryIfValid(url);
+    saveSessionDebounced();
     return id;
   },
 
@@ -69,6 +100,7 @@ export const browserActions = {
     if (browserState.tabs.length === 0) {
       await this.openTab("about:blank");
     }
+    saveSessionDebounced();
   },
 
   /**
@@ -87,6 +119,8 @@ export const browserActions = {
   async navigate(id: string, url: string): Promise<void> {
     await invoke<void>("navigate", { id, url });
     await this.fetchTabs();
+    recordHistoryIfValid(url);
+    saveSessionDebounced();
   },
 
   /**
@@ -95,6 +129,33 @@ export const browserActions = {
   async setActiveTab(id: string): Promise<void> {
     await invoke<void>("set_active_tab", { id });
     setBrowserState("activeTabId", id);
+    saveSessionDebounced();
+  },
+
+  async restoreSession(): Promise<boolean> {
+    try {
+      const savedTabs = await invoke<TabSessionEntry[]>("db_restore_session");
+      if (savedTabs && savedTabs.length > 0) {
+        let activeTabIdToSet: string | null = null;
+        for (const saved of savedTabs) {
+          const id = await invoke<string>("open_tab", {
+            url: saved.url,
+            isBackground: false,
+          });
+          if (saved.is_active) {
+            activeTabIdToSet = id;
+          }
+        }
+        await this.fetchTabs();
+        if (activeTabIdToSet) {
+          await this.setActiveTab(activeTabIdToSet);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error("Failed to restore session from SQLite DB:", err);
+    }
+    return false;
   },
 
   /**
