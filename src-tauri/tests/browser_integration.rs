@@ -36,7 +36,10 @@ fn open_tab_returns_valid_uuid_and_registers_tab() {
     let tabs = service.get_tabs().expect("get_tabs should succeed");
     assert_eq!(tabs.len(), 1, "exactly one tab should exist");
     assert_eq!(tabs[0].id, id, "tab id must match the returned uuid");
-    assert_eq!(tabs[0].url, "https://example.com", "url must be set correctly");
+    assert_eq!(
+        tabs[0].url, "https://example.com",
+        "url must be set correctly"
+    );
     assert!(!tabs[0].is_background, "tab should not be a background tab");
 }
 
@@ -112,7 +115,9 @@ fn close_tab_removes_it_from_list() {
         .open_tab(handle, "https://example.com".to_string(), false)
         .expect("open_tab should succeed");
 
-    service.close_tab(handle, id).expect("close_tab should succeed");
+    service
+        .close_tab(handle, id)
+        .expect("close_tab should succeed");
 
     let tabs = service.get_tabs().expect("get_tabs should succeed");
     assert!(tabs.is_empty(), "tab list must be empty after close");
@@ -164,7 +169,10 @@ fn background_tab_is_registered_and_fetchable() {
         .iter()
         .find(|t| t.id == bg_id)
         .expect("background tab must be in the list");
-    assert!(bg_tab.is_background, "background tab must have is_background=true");
+    assert!(
+        bg_tab.is_background,
+        "background tab must have is_background=true"
+    );
     assert_eq!(
         bg_tab.url, "https://background.example.com",
         "background tab URL must be set"
@@ -175,7 +183,10 @@ fn background_tab_is_registered_and_fetchable() {
         .iter()
         .find(|t| t.id == fg_id)
         .expect("foreground tab must still be in the list");
-    assert!(!fg_tab.is_background, "foreground tab must not be a background tab");
+    assert!(
+        !fg_tab.is_background,
+        "foreground tab must not be a background tab"
+    );
 }
 
 /// A background tab must be closeable independently of foreground tabs.
@@ -191,7 +202,9 @@ fn close_background_tab_leaves_foreground_tab() {
         .open_tab(handle, "https://background.example.com".to_string(), true)
         .expect("open background tab");
 
-    service.close_tab(handle, bg_id).expect("close background tab");
+    service
+        .close_tab(handle, bg_id)
+        .expect("close background tab");
 
     let tabs = service.get_tabs().expect("get_tabs should succeed");
     assert_eq!(tabs.len(), 1, "only the foreground tab must remain");
@@ -230,11 +243,16 @@ fn browser_service_full_lifecycle() {
         .expect("open background tab should succeed");
     let tabs = service.get_tabs().expect("get_tabs should succeed");
     assert_eq!(tabs.len(), 2);
-    let bg_tab = tabs.iter().find(|t| t.id == bg_id).expect("bg tab must exist");
+    let bg_tab = tabs
+        .iter()
+        .find(|t| t.id == bg_id)
+        .expect("bg tab must exist");
     assert!(bg_tab.is_background);
 
     // 4. Close foreground tab
-    service.close_tab(handle, id).expect("close_tab should succeed");
+    service
+        .close_tab(handle, id)
+        .expect("close_tab should succeed");
     let tabs = service.get_tabs().expect("get_tabs should succeed");
     assert_eq!(tabs.len(), 1);
     assert_eq!(tabs[0].id, bg_id);

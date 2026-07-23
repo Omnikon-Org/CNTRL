@@ -2,206 +2,73 @@
 
 **Intent-based autonomous browsing**
 
-CNTRL Browser is a lightweight, AI-driven autonomous browser built with Tauri (Rust backend) and SolidJS (TypeScript frontend). It is designed to interpret natural language intents and execute them autonomously across the web.
-
-## Architecture Overview
-- **Runtime**: Tauri v2
-- **Backend**: Rust (Business logic, SQLite memory, OS Keychain, AI router, OS webview fallback)
-- **Frontend**: SolidJS + TypeScript (State: Solid stores, Styling: CSS custom properties)
-- **AI Tiers**:
-  - Tier 1 (Local): Ollama
-  - Tier 2 (Freemium): Gemini Flash, Groq, Hugging Face
-  - Tier 3 (Precision): OpenAI-compatible endpoints (Claude, GPT-4o, etc.)
-
-## 7-Phase Build Plan
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| **Phase 1** | Project Scaffold & CI Pipeline | ✅ Complete |
-| **Phase 2** | Webview Engine & Browser Chrome | ✅ Complete |
-| **Phase 3** | Hybrid Brain & Model Router | ✅ Complete |
-| **Phase 4** | Intent Layer & Command Bar | ✅ Complete |
-| **Phase 5** | Memory Engine & Security Layer | 🔲 Not started |
-| **Phase 6** | Background Agents & Macro Recorder | 🔲 Not started |
-| **Phase 7** | Design System, Plugin SDK & OSS Release | 🔲 Not started |
-
-### Phase 1 — Project Scaffold & CI Pipeline
-Tauri v2 + SolidJS + TypeScript monorepo. Full CI pipeline: Clippy, rustfmt,
-`cargo test`, `tsc --noEmit`, ESLint, Vitest. Global error types via `thiserror`.
-Biome formatter. Strict TypeScript with `noUncheckedIndexedAccess` and
-`exactOptionalPropertyTypes`.
-
-### Phase 2 — Webview Engine & Browser Chrome
-Native OS webview per tab. `BrowserService` managing tab lifecycle (open, close,
-navigate, back, forward, reload). Tab bar with Cmd+T / Cmd+W / Cmd+Shift+T.
-URL bar with HTTPS lock icon and HTTP warning indicator. Playwright-based
-headless fallback for WebKit-hostile sites, rendered in a sandboxed iframe.
-
-### Phase 3 — Hybrid Brain & Model Router
-Trait-based provider system with per-provider files under `services/ai/`.
-Tier 1 (Ollama), Tier 2 (Gemini, Groq, HuggingFace, OpenRouter), Tier 3
-(generic OpenAI-compatible). Complexity scorer (0–10 int → tier mapping).
-All API keys stored in the OS keychain — zero plaintext secrets on disk.
-Settings UI with per-provider health indicators. OpenRouter free-model filter.
-HuggingFace model list and inference.
-
-### Phase 4 — Intent Layer & Command Bar
-Natural language command classification into 7 intent types. Multi-step task
-planner and executor. Cmd+K command bar overlay with live step feed.
-
-### Phase 5 — Memory Engine & Security Layer *(planned)*
-SQLite via `sqlx` for task history and habits. LanceDB semantic recall.
-OS keychain audit log. Privacy mode blocking remote AI calls.
-
-### Phase 6 — Background Agents & Macro Recorder *(planned)*
-Tokio background job queue. `.vibe` macro file format. Cron scheduling.
-OS notifications. Import/export and visual schedule picker.
-
-### Phase 7 — Design System, Plugin SDK & OSS Release *(planned)*
-Full Mecha-Industrial design token application. Light mode toggle. WASM
-plugin sandbox. OSS documentation, example macros, release pipeline.
-
-## Running the project locally
-
-[#running-the-project-locally](#running-the-project-locally)
-
-### Prerequisites
-
-[#prerequisites](#prerequisites)
-
-- **Node.js 20+** — <https://nodejs.org/>
-- **Rust (stable toolchain)** — <https://rustup.rs>
-- **Tauri v2 CLI** — installed via Cargo (see below)
-- **OS-specific Tauri v2 system dependencies** — see the [Installing OS dependencies](#installing-os-dependencies) section below
-
-### Installing OS dependencies
-
-[#installing-os-dependencies](#installing-os-dependencies)
-
-#### macOS
-```bash
-xcode-select --install
-```
-
-#### Linux (Debian/Ubuntu)
-```bash
-sudo apt update
-sudo apt install libwebkit2gtk-4.1-dev \
-build-essential \
-curl \
-wget \
-file \
-libxdo-dev \
-libssl-dev \
-libayatana-appindicator3-dev \
-librsvg2-dev
-```
-
-#### Windows
-
-Tauri v2 needs a working C++ linker. You have two toolchain options:
-
-- **MSVC (recommended, default on Windows):** install the [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select the **"Desktop development with C++"** workload. This provides `link.exe`, which the Rust compiler needs to produce the final binary.
-- **GNU (alternative):** if you'd rather avoid Visual Studio, use the GNU toolchain instead:
-  ```bash
-  rustup toolchain install stable-x86_64-pc-windows-gnu
-  rustup default stable-x86_64-pc-windows-gnu
-  ```
-  This requires MSYS2/MinGW-w64 on your `PATH`.
-
-Also make sure [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) is installed (it ships by default on up-to-date Windows 11 systems).
-
-### Install the Tauri CLI
-
-[#install-the-tauri-cli](#install-the-tauri-cli)
-```bash
-cargo install tauri-cli
-```
-
-Verify:
-```bash
-cargo tauri --version
-```
-
-### 1. Clone the repository
-
-[#1-clone-the-repository](#1-clone-the-repository)
-```bash
-git clone https://github.com/Omnikon-Org/CNTRL.git
-cd CNTRL
-```
-
-### 2. Install JavaScript dependencies
-
-[#2-install-javascript-dependencies](#2-install-javascript-dependencies)
-
-The repo ships with a `package-lock.json`, so use npm:
-```bash
-npm install
-```
-
-### 3. Run the app
-
-[#3-run-the-app](#3-run-the-app)
-
-**Full app (Tauri + SolidJS frontend, native window):**
-```bash
-npm run tauri dev
-```
-
-The first run will take noticeably longer, since Cargo has to compile the Rust backend from scratch.
-
-**Frontend only (skip the Rust/Tauri build):**
-
-If you just want to work on the SolidJS UI and don't need the native shell:
-```bash
-npm run dev
-```
-
-### Environment tested
-
-[#environment-tested](#environment-tested)
-
-- **OS:** Windows 11 Home
-- **Node.js:** v24.13.1
-- **Rust:** 1.96.1 (stable-x86_64-pc-windows-gnu)
+CNTRL Browser is a lightweight, local-first autonomous browser built with Tauri v2 (Rust backend) and SolidJS (TypeScript frontend). It interprets natural language intents, automates complex web workflows, and prioritizes user privacy with local LLMs and zero plaintext key storage.
 
 ---
 
-## Troubleshooting
+## 📚 Important Documentation
 
-[#troubleshooting](#troubleshooting)
+Detailed architectural, PRD, and development documentation can be found in the [`Important Documentation/`](./Important%20Documentation/) directory:
 
-### Node.js version is too old
+- 📄 **[PRD.md](./Important%20Documentation/PRD.md)** — Project Requirements, capabilities, target audience, hurdles, and roadmap.
+- 🏗️ **[Architecture.md](./Important%20Documentation/Architecture.md)** — System architecture, flow diagrams, technical stack, and IPC model.
+- ⚖️ **[Rules.md](./Important%20Documentation/Rules.md)** — Core engineering guidelines, AI rules, and code constraints.
+- 🎨 **[Design.md](./Important%20Documentation/Design.md)** — Mecha-Industrial design tokens, typography, dark/light themes.
+- 🧠 **[Memory.md](./Important%20Documentation/Memory.md)** — Living development state tracker and project invariants.
 
-Ensure you're on Node.js 20 or later:
+---
+
+## ✨ Features
+
+- 🌐 **Native Webview Engine**: Lightweight native browser tabs on macOS (WebKit), Windows (WebView2), and Linux (WebKitGTK).
+- 🛡️ **Playwright Fallback**: Sandboxed fallback engine for complex or WebKit-hostile web pages.
+- 🧠 **3-Tier AI Router**: Seamless execution across Tier 1 (Ollama), Tier 2 (Gemini, Groq, HF), and Tier 3 (OpenAI-compatible endpoints).
+- 🔐 **OS Keychain Enclave**: 100% encrypted credential storage in macOS Keychain, Windows Credential Manager, and Linux Secret Service.
+- 💬 **Intent Command Bar**: Natural language command parser and step executor overlay (`Cmd+K`).
+- 📼 **Macro Recorder & Scheduler**: Record visual browser action macros (`.vibe` format) and run them on cron schedules.
+- 🔒 **Privacy Guard**: One-click total privacy lock blocking all remote AI API calls.
+- 🧩 **WASM Plugin Sandbox**: Embedded Wasmtime runtime for secure third-party extension isolation.
+
+---
+
+## 🚀 Running Locally
+
+### Prerequisites
+
+- **Node.js 20+** — <https://nodejs.org/>
+- **Rust (stable toolchain)** — <https://rustup.rs>
+- **Protobuf compiler (`protoc`)** — required for LanceDB vector store
+  - macOS: `brew install protobuf`
+  - Linux: `sudo apt install protobuf-compiler`
+  - Windows: `choco install protoc`
+- **Tauri v2 CLI** — `cargo install tauri-cli`
+
+### Installation & Run
+
 ```bash
-node -v
+# 1. Clone repository
+git clone https://github.com/Omnikon-Org/CNTRL.git
+cd CNTRL
+
+# 2. Install dependencies
+npm install
+
+# 3. Run full desktop application
+npm run tauri dev
+
+# Alternatively, run frontend only (UI iteration)
+npm run dev
 ```
 
-### Cargo command not found
+---
 
-Restart your terminal after installing Rust so `PATH` picks up Cargo.
-```bash
-cargo --version
-```
+## 🌿 Branching Model
 
-### Tauri CLI not found
-```bash
-cargo install tauri-cli
-cargo tauri --version
-```
+CNTRL Browser follows a clean single-branch open-source workflow:
 
-### `link.exe` not found / MSVC linker error (Windows)
-
-This means the Visual Studio Build Tools' C++ workload isn't installed, or the install is incomplete. Reopen the Visual Studio Installer, confirm **"Desktop development with C++"** is checked, then restart your terminal. If you'd rather not install Visual Studio at all, switch to the GNU toolchain instead (see [Installing OS dependencies → Windows](#installing-os-dependencies) above).
-
-### Windows Smart App Control (SAC) blocks the app — `os error 4551`
-
-Windows Smart App Control blocks unsigned local binaries by default — this includes the debug binary that `npm run tauri dev` builds locally, since it isn't code-signed. If the app fails to launch with this error:
-
-- Check whether SAC is on: **Settings → Privacy & security → Windows Security → App & browser control → Smart App Control**. If it's on, you can turn it off — note that once disabled, SAC can only be re-enabled via a clean Windows reinstall, so treat this as a one-way decision.
-- Alternatively, develop inside a VM or a machine without SAC enabled, or sign the binary if you have a code-signing certificate available.
+- **`main`**: The sole production branch. All pull requests target `main`.
+- **`feat/<name>`**: Feature branches opened by contributors.
+- **`fix/<name>`**: Bug fix or patch branches.
 
 ### Missing WebView dependencies
 
@@ -265,7 +132,8 @@ Additional documentation is available in the `docs` directory.
 - [Open Source Checklist](docs/OPEN_SOURCE_CHECKLIST.md)
 - [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md)
 - [Make a tiny UI change (beginner walk-through)](docs/UI_WALKTHROUGH.md)
+---
 
-## Contributing
+## 📜 License
 
-We welcome contributions of all kinds – bug fixes, features, tests, and documentation improvements.
+[MIT License](./LICENSE) © 2026 CNTRL Browser Contributors.

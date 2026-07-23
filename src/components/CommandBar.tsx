@@ -5,6 +5,7 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 import "./CommandBar.css";
 import { SparklesIcon } from "./Icons";
+import { macroState } from "../stores/macroStore";
 
 interface StepStatusEvent {
   step_index: number;
@@ -23,15 +24,25 @@ export const CommandBar: Component = () => {
   const [input, setInput] = createSignal("");
   const [steps, setSteps] = createSignal<StepState[]>([]);
   const [isProcessing, setIsProcessing] = createSignal(false);
+  const [isPrivacyEnabled, setIsPrivacyEnabled] = createSignal(false);
   let inputRef: HTMLInputElement | undefined;
   let unlisten: UnlistenFn | undefined;
+
+  const checkPrivacyMode = async () => {
+    try {
+      const enabled = await invoke<boolean>("is_privacy_mode_enabled");
+      setIsPrivacyEnabled(enabled);
+    } catch (err) {
+      console.error("Failed to fetch privacy mode status:", err);
+    }
+  };
 
   onMount(async () => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setIsOpen(true);
-        // Focus is handled by an effect or small timeout because of the DOM render tick
+        void checkPrivacyMode();
         setTimeout(() => inputRef?.focus(), 50);
       } else if (e.key === "Escape" && isOpen()) {
         e.preventDefault();
@@ -39,12 +50,13 @@ export const CommandBar: Component = () => {
       }
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
+    void checkPrivacyMode();
+
 
     unlisten = await listen<StepStatusEvent>("intent://step-status", (event) => {
       const payload = event.payload;
       setSteps((prev) => {
         const newSteps = [...prev];
-        // Ensure array is large enough
         while (newSteps.length <= payload.step_index) {
           newSteps.push({ status: "Pending", result: null });
         }
@@ -72,10 +84,19 @@ export const CommandBar: Component = () => {
     if (!query || isProcessing()) return;
 
     setIsProcessing(true);
-    setSteps([]); // reset previous steps
+    setSteps([]); 
 
     try {
       await invoke("submit_intent", { input: query });
+      
+      // Phase 6: If recording, capture this intent
+      if (macroState.isRecording) {
+        try {
+          await invoke("capture_intent", { intent: query });
+        } catch (captureErr) {
+          console.error("Failed to capture intent for macro:", captureErr);
+        }
+      }
     } catch (err) {
       console.error(err);
       setSteps([{ status: "Failed", result: String(err) }]);
@@ -95,7 +116,7 @@ export const CommandBar: Component = () => {
   return (
     <Show when={isOpen()}>
       <div class="cmd-bar-overlay" onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}>
-        <div class="cmd-bar">
+        <div class={`cmd-bar ${isPrivacyEnabled() ? "privacy-active" : ""}`}>
           <form class="cmd-bar-input-wrapper" onSubmit={handleSubmit}>
             <SparklesIcon />
             <input
@@ -109,6 +130,9 @@ export const CommandBar: Component = () => {
               autocomplete="off"
               spellcheck={false}
             />
+            <Show when={isPrivacyEnabled()}>
+              <span class="cmd-privacy-badge" title="Privacy mode active: remote AI blocked.">Privacy Active</span>
+            </Show>
           </form>
 
           <Show when={steps().length > 0}>

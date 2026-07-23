@@ -1,25 +1,13 @@
-//! Groq provider — Tier 2 (Freemium).
-//!
-//! Groq's Cloud API is OpenAI-compatible. The API key is retrieved from the
-//! OS keychain on each request. Free-tier rate limits apply.
-//!
-//! API reference: <https://console.groq.com/docs/openai>
-
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
+use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 use crate::error::CntrlError;
 use crate::services::keychain;
-use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 
 const GROQ_API_BASE: &str = "https://api.groq.com/openai/v1/chat/completions";
-/// Default model; user can override via settings.
 const GROQ_DEFAULT_MODEL: &str = "llama3-8b-8192";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Wire types — OpenAI-compatible format
-// ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Serialize)]
 struct ChatMessage<'a> {
@@ -54,22 +42,12 @@ struct GroqResponse {
     usage: Option<GroqUsage>,
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider implementation
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Groq free-tier provider (Tier 2).
 pub struct GroqProvider {
     client: Client,
     model: String,
 }
 
 impl GroqProvider {
-    /// Creates a new `GroqProvider`.
-    ///
-    /// # Arguments
-    /// * `model` – Groq model ID (e.g. `"llama3-8b-8192"`). Pass `None` to
-    ///   use the default.
     #[must_use]
     pub fn new(model: Option<String>) -> Self {
         Self {
@@ -121,7 +99,9 @@ impl Provider for GroqProvider {
         if !res.status().is_success() {
             let status = res.status();
             let err_text = res.text().await.unwrap_or_default();
-            return Err(CntrlError::Ai(format!("Groq API error {status}: {err_text}")));
+            return Err(CntrlError::Ai(format!(
+                "Groq API error {status}: {err_text}"
+            )));
         }
 
         let data: GroqResponse = res
@@ -137,7 +117,9 @@ impl Provider for GroqProvider {
             .unwrap_or_default();
 
         if text.is_empty() {
-            return Err(CntrlError::Ai("Groq returned an empty response".to_string()));
+            return Err(CntrlError::Ai(
+                "Groq returned an empty response".to_string(),
+            ));
         }
 
         let tokens_used = data.usage.and_then(|u| u.total_tokens);
@@ -150,14 +132,9 @@ impl Provider for GroqProvider {
     }
 
     async fn health_check(&self) -> bool {
-        // Key presence is the cheapest proxy for "is this provider configured".
         keychain::secret_exists(keychain::KEY_GROQ)
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tests
-// ─────────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
@@ -177,7 +154,6 @@ mod tests {
         assert_eq!(p.model, "mixtral-8x7b-32768");
     }
 
-    /// Verifies the request body matches Groq's OpenAI-compatible format.
     #[test]
     fn request_body_user_only() {
         let messages = vec![ChatMessage {
@@ -194,7 +170,6 @@ mod tests {
         assert_eq!(json["messages"][0]["content"], "Hello");
     }
 
-    /// Verifies system messages are prepended correctly.
     #[test]
     fn request_body_with_system_message() {
         let messages = vec![

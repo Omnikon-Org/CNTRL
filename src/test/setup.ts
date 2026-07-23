@@ -1,21 +1,11 @@
-/**
- * @module test/setup
- * Global test setup for Vitest.
- * Mocks all Tauri APIs so components can render without a native runtime.
- */
 import "@testing-library/jest-dom";
 import { beforeAll, vi } from "vitest";
-
-// Mock ResizeObserver (not available in jsdom)
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}
   disconnect(): void {}
 }
 globalThis.ResizeObserver = MockResizeObserver;
-
-// ─── Tauri API mocks ────────────────────────────────────────────────────────
-
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn().mockImplementation((cmd: string) => {
     switch (cmd) {
@@ -34,15 +24,13 @@ vi.mock("@tauri-apps/api/core", () => ({
     }
   }),
 }));
-
 vi.mock("@tauri-apps/api/event", () => ({
   listen: vi.fn().mockImplementation(() => {
     return Promise.resolve(() => {
-      // unlisten no-op
+      
     });
   }),
 }));
-
 vi.mock("@tauri-apps/plugin-os", () => ({
   platform: vi.fn().mockResolvedValue("macos"),
 }));
@@ -50,8 +38,6 @@ vi.mock("@tauri-apps/plugin-os", () => ({
 vi.mock("@tauri-apps/plugin-shell", () => ({
   open: vi.fn().mockResolvedValue(undefined),
 }));
-
-// ─── Global Tauri IPC shim ──────────────────────────────────────────────────
 
 beforeAll(() => {
   Object.defineProperty(window, "__TAURI_INTERNALS__", {
