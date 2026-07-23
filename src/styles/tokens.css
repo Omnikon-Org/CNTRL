@@ -1,4 +1,4 @@
-:root {
+:root[data-theme="dark"] {
   --color-bg-base: #0e0e0e;
   --color-bg-panel: #161616;
   --color-bg-elevated: #1f1f1f;
