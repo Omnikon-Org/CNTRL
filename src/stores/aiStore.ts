@@ -1,7 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 import { createStore } from "solid-js/store";
+import { LRUCache } from "../utils/cache";
 import type { IntentRouterResult, ModelConfig, ModelTier } from "../types";
 export type { ModelConfig, ModelTier, IntentRouterResult };
+
+const modelCache = new LRUCache<string, string[]>(10, 5 * 60 * 1000); // 5 minutes TTL
+
 export const [aiState, setAiState] = createStore<ModelConfig>({
   tier: "Freemium",
   openrouter_key: null,
@@ -15,16 +19,26 @@ export const askAi = async (prompt: string): Promise<string> => {
   return invoke<string>("ask_ai", { prompt });
 };
 export const getHfModels = async (): Promise<string[]> => {
+  const cached = modelCache.get("hf_models");
+  if (cached) return cached;
+
   try {
-    return await invoke<string[]>("get_hf_models");
+    const models = await invoke<string[]>("get_hf_models");
+    modelCache.set("hf_models", models);
+    return models;
   } catch (error) {
     console.error("Failed to fetch HF models:", error);
     return [];
   }
 };
 export const getOpenRouterFreeModels = async (): Promise<string[]> => {
+  const cached = modelCache.get("openrouter_models");
+  if (cached) return cached;
+
   try {
-    return await invoke<string[]>("get_openrouter_free_models");
+    const models = await invoke<string[]>("get_openrouter_free_models");
+    modelCache.set("openrouter_models", models);
+    return models;
   } catch (error) {
     console.error("Failed to fetch OpenRouter free models:", error);
     return [];
