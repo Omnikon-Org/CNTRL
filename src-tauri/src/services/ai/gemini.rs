@@ -1,25 +1,13 @@
-//! Google Gemini provider — Tier 2 (Freemium).
-//!
-//! Uses the Gemini 1.5 Flash API (free tier). The API key is retrieved
-//! from the OS keychain via [`crate::services::keychain`] and is never
-//! stored in memory longer than the duration of a single request.
-//!
-//! API reference: <https://ai.google.dev/api/generate-content>
-
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
+use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 use crate::error::CntrlError;
 use crate::services::keychain;
-use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 
 const GEMINI_API_BASE: &str = "https://generativelanguage.googleapis.com/v1beta/models";
 const GEMINI_MODEL: &str = "gemini-1.5-flash";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Wire types
-// ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Serialize)]
 struct GeminiPart<'a> {
@@ -106,9 +94,7 @@ impl Provider for GeminiProvider {
     async fn complete(&self, req: CompletionRequest) -> Result<CompletionResponse, CntrlError> {
         let api_key = keychain::retrieve_secret(keychain::KEY_GEMINI)?;
 
-        let url = format!(
-            "{GEMINI_API_BASE}/{GEMINI_MODEL}:generateContent?key={api_key}"
-        );
+        let url = format!("{GEMINI_API_BASE}/{GEMINI_MODEL}:generateContent?key={api_key}");
 
         let body = GeminiRequest {
             contents: vec![GeminiContent {
@@ -130,7 +116,9 @@ impl Provider for GeminiProvider {
         if !res.status().is_success() {
             let status = res.status();
             let err_text = res.text().await.unwrap_or_default();
-            return Err(CntrlError::Ai(format!("Gemini API error {status}: {err_text}")));
+            return Err(CntrlError::Ai(format!(
+                "Gemini API error {status}: {err_text}"
+            )));
         }
 
         let data: GeminiResponse = res
@@ -147,12 +135,12 @@ impl Provider for GeminiProvider {
             .unwrap_or_default();
 
         if text.is_empty() {
-            return Err(CntrlError::Ai("Gemini returned an empty response".to_string()));
+            return Err(CntrlError::Ai(
+                "Gemini returned an empty response".to_string(),
+            ));
         }
 
-        let tokens_used = data
-            .usage_metadata
-            .and_then(|u| u.total_token_count);
+        let tokens_used = data.usage_metadata.and_then(|u| u.total_token_count);
 
         Ok(CompletionResponse {
             text,
@@ -202,12 +190,17 @@ mod tests {
                 parts: vec![GeminiPart { text: "Hi" }],
             }],
             system_instruction: Some(GeminiContent {
-                parts: vec![GeminiPart { text: "Be concise." }],
+                parts: vec![GeminiPart {
+                    text: "Be concise.",
+                }],
             }),
         };
 
         let json = serde_json::to_value(&req).expect("should serialise");
-        assert_eq!(json["system_instruction"]["parts"][0]["text"], "Be concise.");
+        assert_eq!(
+            json["system_instruction"]["parts"][0]["text"],
+            "Be concise."
+        );
     }
 
     #[test]

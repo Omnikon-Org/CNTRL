@@ -1,7 +1,7 @@
 import { Component, For, createSignal, onMount } from 'solid-js';
 import { platform } from '@tauri-apps/plugin-os';
 import { browserState, browserActions } from '../stores/browserStore';
-import { WindowControls } from '../stores/WindowControls';
+import { WindowControls } from './WindowControls';
 import './TabBar.css';
 
 export const TabBar: Component = () => {
@@ -47,7 +47,6 @@ export const TabBar: Component = () => {
                 e.stopPropagation();
                 browserActions.closeTab(tab.id);
               }}
-              aria-label={`Close ${tab.title} tab`}
               title="Close tab"
             >
               ×

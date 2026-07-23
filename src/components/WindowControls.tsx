@@ -1,13 +1,7 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
-/**
- * Custom window control buttons for Windows OS.
- * On macOS, the native traffic lights are used via titleBarStyle: Overlay.
- * This component renders only on Windows.
- */
 export function WindowControls() {
   const appWindow = getCurrentWindow();
-
   return (
     <div class="window-controls">
       <button

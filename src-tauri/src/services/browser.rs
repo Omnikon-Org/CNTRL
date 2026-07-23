@@ -30,7 +30,7 @@ pub struct BrowserConfig {
 
 impl Default for BrowserConfig {
     fn default() -> Self {
-        Self { 
+        Self {
             user_agent: None,
             background_workers: 3,
             background_queue_capacity: 100,
@@ -97,7 +97,6 @@ impl BrowserService {
                 .parse()
                 .unwrap_or_else(|_| "about:blank".parse().unwrap());
 
-            // Initialization scripts for Fix 2
             let init_script = r#"
                 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
                 document.addEventListener('DOMContentLoaded', () => {
@@ -153,7 +152,6 @@ impl BrowserService {
                 }
             }
 
-            // Spawn 10s timeout to trigger fallback
             let url_clone = url.clone();
             if !url_clone.starts_with("cntrl://") && url_clone != "about:blank" {
                 let state_clone2 = self.state.clone();
@@ -169,14 +167,13 @@ impl BrowserService {
                             );
                             t.fallback_mode = true;
                             if let Some(w) = app_clone.get_webview(&format!("tab-{}", id_clone)) {
-                                let _ = w.hide(); // Hide native webview so iframe can show
+                                let _ = w.hide();
                             }
                             let _ = app_clone.emit("tabs-updated", ());
                         }
                     }
                 });
             } else {
-                // Instantly mark internal pages as loaded
                 let mut state = self.state.write();
                 if let Some(t) = state.tabs.iter_mut().find(|t| t.id == id) {
                     t.loaded = true;
@@ -190,7 +187,6 @@ impl BrowserService {
         if !is_background {
             let prev_active = state.active_tab_id;
             state.active_tab_id = Some(id);
-            // Hide previous active, show new
             if let Some(prev_id) = prev_active {
                 if let Some(w) = app.get_webview(&format!("tab-{}", prev_id)) {
                     let _ = w.hide();
@@ -237,7 +233,7 @@ impl BrowserService {
         let mut state = self.state.write();
         if let Some(tab) = state.tabs.iter_mut().find(|t| t.id == id) {
             tab.url = url.clone();
-            tab.fallback_mode = false; // Reset fallback
+            tab.fallback_mode = false;
             tab.loaded = false;
 
             if let Some(w) = app.get_webview(&format!("tab-{}", id)) {
@@ -245,11 +241,10 @@ impl BrowserService {
                     let _ = w.hide();
                 } else if let Ok(parsed_url) = url.parse() {
                     let _ = w.navigate(parsed_url);
-                    let _ = w.show(); // Ensure native is visible again since fallback might have hidden it
+                    let _ = w.show();
                 }
             }
 
-            // Spawn timeout for navigation
             let url_clone = url.clone();
             if !url_clone.starts_with("cntrl://") && url_clone != "about:blank" {
                 let state_clone = self.state.clone();

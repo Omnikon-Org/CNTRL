@@ -9,7 +9,9 @@
     "build": "vite build",
     "serve": "vite preview",
     "tauri": "tauri",
-    "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0"
+    "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "license": "MIT",
   "dependencies": {
