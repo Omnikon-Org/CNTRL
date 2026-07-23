@@ -70,6 +70,68 @@ CNTRL Browser follows a clean single-branch open-source workflow:
 - **`feat/<name>`**: Feature branches opened by contributors.
 - **`fix/<name>`**: Bug fix or patch branches.
 
+### Missing WebView dependencies
+
+Refer to the official Tauri prerequisites documentation: <https://v2.tauri.app/start/prerequisites/>
+
+### Additional notes
+
+- Use the latest stable versions of Node.js and Rust where possible.
+- If you hit dependency issues, delete `node_modules` and reinstall:
+  ```bash
+  npm install
+  ```
+- If problems persist, update your Rust toolchain:
+  ```bash
+  rustup update
+  ```
+
+## Branching Model
+
+CNTRL Browser uses a straightforward OSS branching strategy:
+
+| Branch | Purpose |
+|---|---|
+| `main` | **Stable integration branch.** All contributor PRs target here. Always in a passing CI state. |
+| `phase-X-*` | Internal milestone branches used by core maintainers. Merged into `main` when a phase is complete. |
+| `feat/<name>` | Feature branches opened by contributors. Branch from `main`, PR back to `main`. |
+| `fix/<name>` | Bug fix or hotfix branches. Branch from `main`, PR back to `main`. |
+| `docs/<name>` | Documentation-only changes. Branch from `main`, PR back to `main`. |
+
+> **All pull requests must target `main`.** The `main` branch is protected — direct pushes are not allowed; every change goes through a reviewed PR that passes CI.
+
+## Documentation
+
+Additional documentation is available in the `docs` directory.
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Open Source Checklist](docs/OPEN_SOURCE_CHECKLIST.md)
+- [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md)
+- [Accessibility Guide](docs/ACCESSIBILITY.md)
+- [Make a tiny UI change (beginner walk-through)](docs/UI_WALKTHROUGH.md)
+## Contributing
+
+We welcome contributions of all kinds — bug fixes, features, tests, and documentation improvements.
+
+1. Fork the repo and clone your fork.
+2. Create a branch off `main` following the naming conventions above (e.g. `feat/intent-scoring`).
+3. Make your changes, write tests, and ensure all CI checks pass locally.
+4. Open a Pull Request against **`main`** with a clear description.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, code style requirements, and commit message conventions.
+
+> **All pull requests must target `main`.** The `main` branch is protected – direct pushes are not allowed; every change goes through a reviewed PR that passes CI.
+
+## Documentation
+
+Additional documentation is available in the `docs` directory.
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Open Source Checklist](docs/OPEN_SOURCE_CHECKLIST.md)
+- [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md)
+- [Make a tiny UI change (beginner walk-through)](docs/UI_WALKTHROUGH.md)
 ---
 
 ## 📜 License
