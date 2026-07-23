@@ -49,7 +49,7 @@ async fn test_scheduler_firing() {
 
     // Schedule to run every second (1/1 * * * * * for tokio-cron-scheduler)
     scheduler
-        .schedule(macro_id.clone(), "1/1 * * * * *", move |mid| {
+        .schedule(macro_id.clone(), "1/1 * * * * *", move |_mid| {
             *fired_clone.lock().unwrap() = true;
         })
         .await
