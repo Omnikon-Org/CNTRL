@@ -15,6 +15,7 @@ Detailed architectural, PRD, and development documentation can be found in the [
 - ⚖️ **[Rules.md](./Important%20Documentation/Rules.md)** — Core engineering guidelines, AI rules, and code constraints.
 - 🎨 **[Design.md](./Important%20Documentation/Design.md)** — Mecha-Industrial design tokens, typography, dark/light themes.
 - 🧠 **[Memory.md](./Important%20Documentation/Memory.md)** — Living development state tracker and project invariants.
+- 🛠️ **[TROUBLESHOOT.md](./TROUBLESHOOT.md)** — Common installation, build, runtime, and dependency troubleshooting steps.
 
 ---
 
