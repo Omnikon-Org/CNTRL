@@ -335,12 +335,7 @@ mod tests {
         );
     }
 
-    #[test]
-    fn score_is_clamped_to_10() {
-<<<<<<< HEAD
         // Maximum possible: all signal groups fire
-=======
->>>>>>> omnikon/main
         let extreme =
             "code debug implement architecture algorithm analyze reason complex multi-step";
         let score = score_complexity(extreme);
@@ -374,21 +369,6 @@ mod tests {
     #[test]
     fn ten_intent_benchmark_8_of_10() {
         let cases: Vec<(&str, Tier)> = vec![
-<<<<<<< HEAD
-            ("browse privately", Tier::Local),                  // 0 → Local
-            ("offline mode", Tier::Local),                      // 0 → Local
-            ("find a recipe for lasagne", Tier::Local),         // 3 → Local
-            ("what is the weather today?", Tier::Local),        // 3 → Local
-            ("translate this text to Spanish", Tier::Freemium), // 3+1=4 → Freemium
-            ("summarize this article", Tier::Freemium),         // 3+2=5 → Freemium
-            ("write a blog post about AI", Tier::Freemium),     // 3+2=5 → Freemium
-            ("debug this React component", Tier::Freemium),     // 3+3=6 → Freemium
-            ("implement a binary search tree in Rust", Tier::Freemium), // 3+3=6 → Freemium
-            (
-                "analyze the logical flaws in this complex argument",
-                Tier::Freemium,
-            ), // 3+2+2=7 (group clamp) -> 5 -> Freemium
-=======
             ("browse privately", Tier::Local),
             ("offline mode", Tier::Local),
             ("find a recipe for lasagne", Tier::Freemium),
@@ -402,7 +382,6 @@ mod tests {
                 "analyze the logical flaws in this complex argument",
                 Tier::Premium,
             ),
->>>>>>> omnikon/main
         ];
 
         let correct: usize = cases

@@ -116,10 +116,7 @@ mod tests {
         assert_eq!(json["model"], "llama3");
         assert_eq!(json["prompt"], "Hello");
         assert_eq!(json["stream"], false);
-<<<<<<< HEAD
         // `system` is skipped when None
-=======
->>>>>>> omnikon/main
         assert!(
             json.get("system").is_none(),
             "system must be omitted when None"
