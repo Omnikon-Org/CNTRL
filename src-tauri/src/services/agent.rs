@@ -181,8 +181,8 @@ async fn execute_plan_direct(
     privacy: &PrivacyGuard,
     db: &DbHandle,
 ) -> Result<String, String> {
-    use crate::services::planner::Step;
     use crate::services::ai::CompletionRequest;
+    use crate::services::planner::Step;
 
     let total = plan.len();
     let mut final_output = String::new();
@@ -207,8 +207,13 @@ async fn execute_plan_direct(
                 Ok(format!("Navigated to {final_url}"))
             }
             Step::AiQuery { prompt } => {
-                let req = CompletionRequest { prompt: prompt.clone(), system: None };
-                router.route(&prompt, req, privacy, db).await
+                let req = CompletionRequest {
+                    prompt: prompt.clone(),
+                    system: None,
+                };
+                router
+                    .route(&prompt, req, privacy, db)
+                    .await
                     .map(|r| r.text)
                     .map_err(|e| e.to_string())
             }
@@ -225,7 +230,8 @@ async fn execute_plan_direct(
             Err(e) => return Err(e),
         }
 
-        let _ = i; let _ = total;
+        let _ = i;
+        let _ = total;
     }
 
     Ok(final_output)

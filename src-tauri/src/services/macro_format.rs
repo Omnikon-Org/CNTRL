@@ -160,8 +160,14 @@ mod tests {
         Vibemacro::new(
             "Morning Routine",
             vec![
-                MacroStep { intent: "go to gmail.com".to_string(), delay_ms: 0 },
-                MacroStep { intent: "go to calendar.google.com".to_string(), delay_ms: 500 },
+                MacroStep {
+                    intent: "go to gmail.com".to_string(),
+                    delay_ms: 0,
+                },
+                MacroStep {
+                    intent: "go to calendar.google.com".to_string(),
+                    delay_ms: 500,
+                },
             ],
         )
     }
@@ -181,8 +187,7 @@ mod tests {
     #[test]
     fn wrong_version_is_rejected() {
         let m = sample();
-        let mut json: serde_json::Value =
-            serde_json::from_str(&m.to_json().unwrap()).unwrap();
+        let mut json: serde_json::Value = serde_json::from_str(&m.to_json().unwrap()).unwrap();
         json["vibe_version"] = serde_json::json!("99");
         let bad_json = json.to_string();
         assert!(Vibemacro::from_json(&bad_json).is_err());

@@ -83,7 +83,9 @@ pub fn capture_intent(
     delay_ms: u64,
     recorder: State<'_, Recorder>,
 ) -> Result<(), String> {
-    recorder.capture(&intent, delay_ms).map_err(|e| e.to_string())
+    recorder
+        .capture(&intent, delay_ms)
+        .map_err(|e| e.to_string())
 }
 
 // ── Library commands ──────────────────────────────────────────────────────────
@@ -123,7 +125,15 @@ pub async fn run_macro_cmd(
     let app_clone = app_handle.clone();
 
     tauri::async_runtime::spawn(async move {
-        run_macro(mac, app_clone, router_arc, browser_clone, privacy_clone, db_clone).await;
+        run_macro(
+            mac,
+            app_clone,
+            router_arc,
+            browser_clone,
+            privacy_clone,
+            db_clone,
+        )
+        .await;
     });
 
     Ok(())
@@ -197,7 +207,10 @@ pub async fn unschedule_macro(
     macro_id: String,
     scheduler: State<'_, MacroScheduler>,
 ) -> Result<(), String> {
-    scheduler.unschedule(&macro_id).await.map_err(|e| e.to_string())
+    scheduler
+        .unschedule(&macro_id)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// List all currently scheduled macros.

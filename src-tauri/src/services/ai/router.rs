@@ -335,6 +335,8 @@ mod tests {
         );
     }
 
+    #[test]
+    fn score_is_clamped_to_10() {
         // Maximum possible: all signal groups fire
         let extreme =
             "code debug implement architecture algorithm analyze reason complex multi-step";

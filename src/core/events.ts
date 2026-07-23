@@ -9,7 +9,6 @@ export type EventKey = keyof EventMap;
 type EventCallback<T> = (payload: T) => void;
 
 class EventBus {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private listeners: Map<EventKey, Set<EventCallback<any>>> = new Map();
 
   /**
