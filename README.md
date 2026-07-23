@@ -2,53 +2,37 @@
 
 **Intent-based autonomous browsing**
 
-CNTRL Browser is a lightweight, AI-driven autonomous browser built with Tauri (Rust backend) and SolidJS (TypeScript frontend). It is designed to interpret natural language intents and execute them autonomously across the web.
-
-## Architecture Overview
-- **Runtime**: Tauri v2
-- **Backend**: Rust (Business logic, SQLite memory, OS Keychain, AI router, OS webview fallback)
-- **Frontend**: SolidJS + TypeScript (State: Solid stores, Styling: CSS custom properties)
-- **AI Tiers**:
-  - Tier 1 (Local): Ollama
-  - Tier 2 (Freemium): Gemini Flash, Groq, Hugging Face
-  - Tier 3 (Precision): OpenAI-compatible endpoints (Claude, GPT-4o, etc.)
-
-## 7-Phase Build Plan
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| **Phase 1** | Project Scaffold & CI Pipeline | ✅ Complete |
-| **Phase 2** | Webview Engine & Browser Chrome | ✅ Complete |
-| **Phase 3** | Hybrid Brain & Model Router | ✅ Complete |
-| **Phase 4** | Intent Layer & Command Bar | ✅ Complete |
-| **Phase 5** | Memory Engine & Security Layer | 🔲 Not started |
-| **Phase 6** | Background Agents & Macro Recorder | 🔲 Not started |
-| **Phase 7** | Design System, Plugin SDK & OSS Release | 🔲 Not started |
-
-### Phase 1 — Project Scaffold & CI Pipeline
-Tauri v2 + SolidJS + TypeScript monorepo. Full CI pipeline: Clippy, rustfmt, `cargo test`, `tsc --noEmit`, ESLint, Vitest. Global error types via `thiserror`. Biome formatter. Strict TypeScript with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`.
-
-### Phase 2 — Webview Engine & Browser Chrome
-Native OS webview per tab. `BrowserService` managing tab lifecycle (open, close, navigate, back, forward, reload). Tab bar with Cmd+T / Cmd+W / Cmd+Shift+T. URL bar with HTTPS lock icon and HTTP warning indicator. Playwright-based headless fallback for WebKit-hostile sites, rendered in a sandboxed iframe.
-
-### Phase 3 — Hybrid Brain & Model Router
-Trait-based provider system with per-provider files under `services/ai/`. Tier 1 (Ollama), Tier 2 (Gemini, Groq, HuggingFace, OpenRouter), Tier 3 (generic OpenAI-compatible). Complexity scorer (0–10 int → tier mapping). All API keys stored in the OS keychain — zero plaintext secrets on disk. Settings UI with per-provider health indicators. OpenRouter free-model filter. HuggingFace model list and inference.
-
-### Phase 4 — Intent Layer & Command Bar
-Natural language command classification into 7 intent types. Multi-step task planner and executor. Cmd+K command bar overlay with live step feed.
-
-### Phase 5 — Memory Engine & Security Layer *(planned)*
-SQLite via `sqlx` for task history and habits. LanceDB semantic recall. OS keychain audit log. Privacy mode blocking remote AI calls.
-
-### Phase 6 — Background Agents & Macro Recorder *(planned)*
-Tokio background job queue. `.vibe` macro file format. Cron scheduling. OS notifications. Import/export and visual schedule picker.
-
-### Phase 7 — Design System, Plugin SDK & OSS Release *(planned)*
-Full Mecha-Industrial design token application. Light mode toggle. WASM plugin sandbox. OSS documentation, example macros, release pipeline.
+CNTRL Browser is a lightweight, local-first autonomous browser built with Tauri v2 (Rust backend) and SolidJS (TypeScript frontend). It interprets natural language intents, automates complex web workflows, and prioritizes user privacy with local LLMs and zero plaintext key storage.
 
 ---
 
-## Running the project locally
+## 📚 Important Documentation
+
+Detailed architectural, PRD, and development documentation can be found in the [`Important Documentation/`](./Important%20Documentation/) directory:
+
+- 📄 **[PRD.md](./Important%20Documentation/PRD.md)** — Project Requirements, capabilities, target audience, hurdles, and roadmap.
+- 🏗️ **[Architecture.md](./Important%20Documentation/Architecture.md)** — System architecture, flow diagrams, technical stack, and IPC model.
+- ⚖️ **[Rules.md](./Important%20Documentation/Rules.md)** — Core engineering guidelines, AI rules, and code constraints.
+- 🎨 **[Design.md](./Important%20Documentation/Design.md)** — Mecha-Industrial design tokens, typography, dark/light themes.
+- 🧠 **[Memory.md](./Important%20Documentation/Memory.md)** — Living development state tracker and project invariants.
+- 🛠️ **[TROUBLESHOOT.md](./TROUBLESHOOT.md)** — Common installation, build, runtime, and dependency troubleshooting steps.
+
+---
+
+## ✨ Features
+
+- 🌐 **Native Webview Engine**: Lightweight native browser tabs on macOS (WebKit), Windows (WebView2), and Linux (WebKitGTK).
+- 🛡️ **Playwright Fallback**: Sandboxed fallback engine for complex or WebKit-hostile web pages.
+- 🧠 **3-Tier AI Router**: Seamless execution across Tier 1 (Ollama), Tier 2 (Gemini, Groq, HF), and Tier 3 (OpenAI-compatible endpoints).
+- 🔐 **OS Keychain Enclave**: 100% encrypted credential storage in macOS Keychain, Windows Credential Manager, and Linux Secret Service.
+- 💬 **Intent Command Bar**: Natural language command parser and step executor overlay (`Cmd+K`).
+- 📼 **Macro Recorder & Scheduler**: Record visual browser action macros (`.vibe` format) and run them on cron schedules.
+- 🔒 **Privacy Guard**: One-click total privacy lock blocking all remote AI API calls.
+- 🧩 **WASM Plugin Sandbox**: Embedded Wasmtime runtime for secure third-party extension isolation.
+
+---
+
+## 🚀 Running the Project Locally
 
 This guide walks you through setting up and running the CNTRL browser locally for development.
 
@@ -67,6 +51,12 @@ Ensure you have the following prerequisites installed on your system:
   ```
 - **Windows installation**: Download and run the installer from [rustup.rs](https://rustup.rs/).
 - **Verify**: `rustc --version` and `cargo --version`
+
+#### Protobuf Compiler (`protoc`)
+Required for LanceDB vector store:
+- **macOS**: `brew install protobuf`
+- **Linux**: `sudo apt install protobuf-compiler`
+- **Windows**: `choco install protoc` or download binary from GitHub releases.
 
 #### Platform-Specific WebView Dependencies
 Tauri depends on the operating system's native webview library. Follow the official setup guide for your OS:
@@ -103,7 +93,7 @@ cargo install tauri-cli
 Clone the project repository and navigate into the folder:
 
 ```bash
-git clone https://github.com/Demon-Die/CNTRL.git
+git clone https://github.com/Omnikon-Org/CNTRL.git
 cd CNTRL
 ```
 
@@ -148,8 +138,8 @@ Open `http://localhost:1420/` in your browser.
   - **Fix**: Ensure Visual Studio Build Tools (or Visual Studio 2017+) is installed with the **"Desktop development with C++"** workload selected. If you do not want to install Visual Studio, switch to the GNU toolchain instead (see instructions under Windows prerequisites).
 * **Windows Smart App Control (SAC) blocks the app — `os error 4551`**
   - **Symptom**: The app fails to launch with this error on Windows.
-  - **Fix**: Windows Smart App Control blocks unsigned local debug binaries by default. 
-    - Check whether SAC is on under: **Settings → Privacy & security → Windows Security → App & browser control → Smart App Control**. If it is, you can turn it off (note: this is a one-way decision on Windows unless you do a clean reinstall).
+  - **Fix**: Windows Smart App Control blocks unsigned local debug binaries by default.
+    - Check whether SAC is on under: **Settings → Privacy & security → Windows Security → App & browser control → Smart App Control**. If it is, you can turn it off.
     - Alternatively, develop inside a virtual machine, on a machine without SAC enabled, or sign the binary if you have a certificate.
 * **Tauri APIs in Standard Web Browsers**
   - **Symptom**: Standalone mode (`npm run dev`) console shows `TypeError: Cannot read properties of undefined (reading 'invoke')`.
@@ -180,31 +170,34 @@ The local environment setup has been verified under the following environments:
 
 ---
 
-## Branching Model
+## 🌿 Branching Model
 
-CNTRL Browser uses a straightforward OSS branching strategy:
+CNTRL Browser follows a clean single-branch open-source workflow:
 
 | Branch | Purpose |
 |---|---|
 | `main` | **Stable integration branch.** All contributor PRs target here. Always in a passing CI state. |
-| `phase-X-*` | Internal milestone branches used by core maintainers. Merged into `main` when a phase is complete. |
 | `feat/<name>` | Feature branches opened by contributors. Branch from `main`, PR back to `main`. |
 | `fix/<name>` | Bug fix or hotfix branches. Branch from `main`, PR back to `main`. |
 | `docs/<name>` | Documentation-only changes. Branch from `main`, PR back to `main`. |
 
 > **All pull requests must target `main`.** The `main` branch is protected — direct pushes are not allowed; every change goes through a reviewed PR that passes CI.
 
-## Documentation
+---
 
-Additional documentation is available in the `docs` directory.
+## 📖 Documentation
+
+Additional documentation is available in the `docs` directory:
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Open Source Checklist](docs/OPEN_SOURCE_CHECKLIST.md)
 - [Tauri Linux Troubleshooting Guide](docs/TAURI-LINUX.md)
-- [Accessibility Guide](docs/ACCESSIBILITY.md)
+- [Make a tiny UI change (beginner walk-through)](docs/UI_WALKTHROUGH.md)
 
-## Contributing
+---
+
+## 🤝 Contributing
 
 We welcome contributions of all kinds — bug fixes, features, tests, and documentation improvements.
 
@@ -215,4 +208,8 @@ We welcome contributions of all kinds — bug fixes, features, tests, and docume
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, code style requirements, and commit message conventions.
 
-> **All pull requests must target `main`.** The `main` branch is protected – direct pushes are not allowed; every change goes through a reviewed PR that passes CI.
+---
+
+## 📜 License
+
+[MIT License](./LICENSE) © 2026 CNTRL Browser Contributors.

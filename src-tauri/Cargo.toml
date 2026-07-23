@@ -36,9 +36,27 @@ keyring = { version = "3", features = ["apple-native", "windows-native", "sync-s
 # Required for the Provider trait
 async-trait = "0.1"
 urlencoding = "2.1.3"
+# SQLite database for memory, habits, audit log, and preferences (Phase 5)
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite", "macros", "uuid", "chrono"] }
+lancedb = "0.31.0"
+tauri-plugin-keyring = "0.1.0"
+# Arrow types required for LanceDB RecordBatch construction
+arrow-array = "53"
+arrow-schema = "53"
+# Async stream utilities
+futures = "0.3"
+# Cron-based macro scheduling (Phase 6)
+tokio-cron-scheduler = { version = "0.13", features = ["signal"] }
+# OS notifications for macro events (Phase 6)
+tauri-plugin-notification = "2"
+# Home directory resolution for ~/.vibe/macros/ (Phase 6)
+dirs = "5"
+# WASM sandbox for plugin isolation (Phase 7)
+wasmtime = { version = "25", default-features = false, features = ["async", "cranelift"] }
+zip = "8.6.0"
 
 [dev-dependencies]
 # Enables mocking in unit tests for provider HTTP calls
 mockall = "0.13"
-
-
+# Temporary directories for in-memory DB tests
+tempfile = "3"

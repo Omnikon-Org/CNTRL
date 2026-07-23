@@ -1,11 +1,3 @@
-//! Generic OpenAI-compatible provider — Tier 3 (Precision).
-//!
-//! Supports any endpoint that implements the OpenAI Chat Completions API,
-//! including Anthropic's Claude (via API proxy), OpenAI GPT-4o, and any
-//! self-hosted OpenAI-compatible server.
-//!
-//! The endpoint URL and API key are retrieved from the OS keychain / config.
-
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -51,25 +43,13 @@ struct OpenAiResponse {
     usage: Option<OpenAiUsage>,
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider implementation
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Generic OpenAI-compatible Tier 3 provider.
 pub struct OpenAiCompatProvider {
     client: Client,
-    /// Full endpoint URL, e.g. `"https://api.openai.com/v1/chat/completions"`.
     endpoint: String,
-    /// Model identifier, e.g. `"gpt-4o"` or `"claude-3-opus-20240229"`.
     model: String,
 }
 
 impl OpenAiCompatProvider {
-    /// Creates a new `OpenAiCompatProvider`.
-    ///
-    /// # Arguments
-    /// * `endpoint` – The full chat-completions endpoint URL.
-    /// * `model`    – The model identifier to pass in requests.
     #[must_use]
     pub fn new(endpoint: impl Into<String>, model: impl Into<String>) -> Self {
         Self {
@@ -159,10 +139,6 @@ impl Provider for OpenAiCompatProvider {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tests
-// ─────────────────────────────────────────────────────────────────────────────
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -174,7 +150,6 @@ mod tests {
         assert_eq!(p.tier(), Tier::Premium);
     }
 
-    /// Verifies the request body serialises to the standard OpenAI format.
     #[test]
     fn request_body_standard_format() {
         let messages = vec![

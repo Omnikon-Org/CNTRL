@@ -4,6 +4,8 @@
   "description": "Capability for the main window",
   "windows": ["main"],
   "permissions": [
+    "notification:default",
+    "notification:allow-show",
     "core:default",
     "opener:default",
     "core:webview:default",

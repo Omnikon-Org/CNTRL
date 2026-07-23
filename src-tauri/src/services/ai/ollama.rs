@@ -1,10 +1,3 @@
-//! Ollama provider — Tier 1 (Local).
-//!
-//! Communicates with a locally-running Ollama instance at the configured base
-//! URL (default: `http://localhost:11434`). No API key is required. If Ollama
-//! is not running, [`health_check`] returns `false` and the router falls back
-//! to Tier 2.
-
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -30,25 +23,13 @@ struct OllamaGenerateResponse {
     response: String,
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider implementation
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Ollama local inference provider.
 pub struct OllamaProvider {
     client: Client,
-    /// Base URL of the Ollama API, e.g. `http://localhost:11434`.
     base_url: String,
-    /// Model name, e.g. `"llama3"` or `"mistral"`.
     model: String,
 }
 
 impl OllamaProvider {
-    /// Creates a new `OllamaProvider`.
-    ///
-    /// # Arguments
-    /// * `base_url` – Ollama server base URL (no trailing slash needed).
-    /// * `model`    – Model name to use for completions.
     #[must_use]
     pub fn new(base_url: impl Into<String>, model: impl Into<String>) -> Self {
         Self {
@@ -115,24 +96,16 @@ impl Provider for OllamaProvider {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tests
-// ─────────────────────────────────────────────────────────────────────────────
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /// Verifies that the correct URL and JSON body are sent to Ollama.
-    /// Uses a mock HTTP server (mockito) pattern via `wiremock` if available,
-    /// or simply asserts the request shape by constructing the struct.
     #[test]
     fn request_body_is_correct() {
         let provider = OllamaProvider::new("http://localhost:11434", "llama3");
         assert_eq!(provider.name(), "Ollama");
         assert_eq!(provider.tier(), Tier::Local);
 
-        // Verify the serialised request shape
         let req_body = OllamaGenerateRequest {
             model: "llama3",
             prompt: "Hello",
@@ -143,7 +116,10 @@ mod tests {
         assert_eq!(json["model"], "llama3");
         assert_eq!(json["prompt"], "Hello");
         assert_eq!(json["stream"], false);
+<<<<<<< HEAD
         // `system` is skipped when None
+=======
+>>>>>>> omnikon/main
         assert!(
             json.get("system").is_none(),
             "system must be omitted when None"

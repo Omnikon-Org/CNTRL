@@ -1,0 +1,24 @@
+{
+  "vibe_version": "1",
+  "id": "22222222-2222-2222-2222-222222222222",
+  "name": "Data Scraper",
+  "description": "Scrape table data from an internal page.",
+  "author": "CNTRL Examples",
+  "created_at": "2026-07-16T18:00:00Z",
+  "updated_at": "2026-07-16T18:00:00Z",
+  "steps": [
+    {
+      "intent": "Navigate to the internal reporting dashboard",
+      "delay_ms": 0
+    },
+    {
+      "intent": "Extract the Q3 earnings table as JSON",
+      "delay_ms": 5000
+    }
+  ],
+  "triggers": [
+    {
+      "kind": "manual"
+    }
+  ]
+}

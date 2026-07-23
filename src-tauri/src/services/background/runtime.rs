@@ -28,11 +28,8 @@ impl BackgroundRuntime {
                 let browser_clone = browser.clone();
 
                 tauri::async_runtime::spawn(async move {
-                    // Acquire worker slot
                     if let Ok(_permit) = sem.acquire().await {
-                        // Execute task (timeout and cleanup is handled inside execute_task)
                         let _ = execute_task(&app_clone, browser_clone, task).await;
-                        // Permit is released when _permit goes out of scope here
                     }
                 });
             }

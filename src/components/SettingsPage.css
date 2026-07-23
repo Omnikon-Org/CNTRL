@@ -529,7 +529,6 @@
   }
 }
 
-/* ── Health grid ────────────────────────────────────────────────────────── */
 .sp-health-grid {
   display: flex;
   flex-direction: column;
@@ -559,7 +558,6 @@
   letter-spacing: 0.05em;
 }
 
-/** 6px status dot per the design spec */
 .status-dot {
   width: 6px;
   height: 6px;
@@ -585,7 +583,6 @@
   50%       { opacity: 0.3; }
 }
 
-/* ── Key fields ─────────────────────────────────────────────────────────── */
 .sp-key-field {
   padding-bottom: 12px;
   border-bottom: 0.5px solid var(--color-border);
@@ -596,7 +593,6 @@
   padding-bottom: 0;
 }
 
-/* ── Danger button ──────────────────────────────────────────────────────── */
 .sp-btn-danger {
   background: transparent;
   border: 0.5px solid var(--color-text-danger);
@@ -613,12 +609,10 @@
   opacity: 0.75;
 }
 
-/* ── Text helpers ───────────────────────────────────────────────────────── */
 .sp-text-success { color: var(--color-text-success); }
 .sp-text-danger  { color: var(--color-text-danger); }
 .sp-text-secondary { color: var(--color-text-secondary); }
 
-/* ── Model columns ──────────────────────────────────────────────────────── */
 .sp-model-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -650,4 +644,58 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.privacy-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.privacy-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.privacy-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.privacy-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-border);
+  transition: .2s;
+  border-radius: 24px;
+}
+
+.privacy-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: var(--color-bg-panel);
+  transition: .2s;
+  border-radius: 50%;
+}
+
+.privacy-switch input:checked + .privacy-slider {
+  background-color: var(--color-text-danger);
+}
+
+.privacy-switch input:checked + .privacy-slider:before {
+  transform: translateX(20px);
+}
+
 

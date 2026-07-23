@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// The 7 core intent categories supported by the Vibe Browser.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum IntentType {
     Navigation,
@@ -13,7 +12,6 @@ pub enum IntentType {
     UnknownFallback,
 }
 
-/// The result of parsing a natural language command.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntentResult {
     pub intent_type: IntentType,
@@ -22,8 +20,6 @@ pub struct IntentResult {
 }
 
 impl IntentResult {
-    /// A naive natural language parser for Phase 4.
-    /// In a production system, this would be backed by an LLM or a sophisticated NLU model.
     pub fn parse(input: &str) -> Self {
         let input_lower = input.trim().to_lowercase();
         let mut parameters = HashMap::new();
@@ -124,7 +120,6 @@ impl IntentResult {
             };
         }
 
-        // By default, treat it as an AI query if it doesn't match known structures
         parameters.insert("query".to_string(), input.to_string());
         IntentResult {
             intent_type: IntentType::AiQuery,

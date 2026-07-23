@@ -1,11 +1,3 @@
-//! Google Gemini provider — Tier 2 (Freemium).
-//!
-//! Uses the Gemini 1.5 Flash API (free tier). The API key is retrieved
-//! from the OS keychain via [`crate::services::keychain`] and is never
-//! stored in memory longer than the duration of a single request.
-//!
-//! API reference: <https://ai.google.dev/api/generate-content>
-
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -16,10 +8,6 @@ use crate::services::keychain;
 
 const GEMINI_API_BASE: &str = "https://generativelanguage.googleapis.com/v1beta/models";
 const GEMINI_MODEL: &str = "gemini-1.5-flash";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Wire types
-// ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Serialize)]
 struct GeminiPart<'a> {
