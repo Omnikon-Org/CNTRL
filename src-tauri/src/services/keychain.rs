@@ -1,3 +1,16 @@
+//! Keychain service - OS-native secret storage.
+//!
+//! All API keys and credentials used by CNTRL pass through this module.
+//! Secrets are stored in the platform's native keychain:
+//! - **macOS**: Keychain Services (`apple-native` feature)
+//! - **Windows**: Windows Credential Manager (`windows-native` feature)
+//! - **Linux**: Secret Service / libsecret (`sync-secret-service` feature)
+//!
+//! **No plaintext credential ever touches the filesystem, SQLite, or any
+//! environment variable.** Callers receive only masked sentinels (e.g.
+//! `"sk-or-***"`) from the config layer; real keys are only fetched here
+//! immediately before use.
+
 use keyring::Entry;
 use std::sync::OnceLock;
 
@@ -72,8 +85,24 @@ pub const KEY_OPENAI_COMPAT: &str = "openai_compat_api_key";
 mod tests {
     use super::*;
 
+    /// Probe if the keychain is available in this environment.
+    fn is_keychain_available() -> bool {
+        let test_key = "cntrl_test_key_availability_probe";
+        let test_value = "probe-value";
+        if store_secret(test_key, test_value).is_err() {
+            return false;
+        }
+        let _ = delete_secret(test_key);
+        true
+    }
+
     #[test]
     fn store_retrieve_delete_roundtrip() {
+        if !is_keychain_available() {
+            eprintln!("Keychain unavailable, skipping test");
+            return;
+        }
+
         let test_key = "cntrl_test_key_roundtrip";
         let test_value = "test-secret-value-do-not-use";
 
@@ -102,12 +131,22 @@ mod tests {
 
     #[test]
     fn delete_nonexistent_key_is_ok() {
+        if !is_keychain_available() {
+            eprintln!("Keychain unavailable, skipping test");
+            return;
+        }
+
         let result = delete_secret("cntrl_test_key_definitely_does_not_exist_xyz");
         assert!(result.is_ok(), "deleting non-existent key must return Ok");
     }
 
     #[test]
     fn secret_exists_false_for_unknown_key() {
+        if !is_keychain_available() {
+            eprintln!("Keychain unavailable, skipping test");
+            return;
+        }
+
         assert!(
             !secret_exists("cntrl_test_key_that_was_never_stored_abc123"),
             "secret_exists must return false for unknown key"

@@ -1,3 +1,13 @@
+//! CNTRL Browser — Tauri application entry point.
+//!
+//! This module is responsible for:
+//! - Registering Tauri plugins.
+//! - Initialising and managing application state (services).
+//! - Wiring up the Tauri event system.
+//! - Registering all Tauri commands via the invoke handler.
+//!
+//! No business logic lives here; all logic is in `services/`.
+
 use tauri::{Emitter, Listener, Manager};
 
 pub mod commands;
@@ -59,12 +69,12 @@ pub fn run() {
             app.manage(background_runtime);
 
             let router = Router::new(
-                "http://localhost:11434",
-                "llama3",
-                "meta-llama/llama-3-8b-instruct:free",
-                "mistralai/Mistral-7B-Instruct-v0.2",
-                None,
-                None,
+                "http://localhost:11434",              // ollama_url
+                "llama3",                              // ollama_model
+                "meta-llama/llama-3-8b-instruct:free", // openrouter model
+                "mistralai/Mistral-7B-Instruct-v0.2",  // hf model
+                None,                                  // compat endpoint (user-configured)
+                None,                                  // compat model
             );
             app.manage(router);
 

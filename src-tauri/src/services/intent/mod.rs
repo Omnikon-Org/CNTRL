@@ -40,6 +40,7 @@ impl IntentResult {
                 .replace("go to ", "")
                 .replace("navigate to ", "")
                 .replace("open ", "");
+            // exception for "open settings"
             if target.trim() == "settings" {
                 parameters.insert("action".to_string(), "open".to_string());
                 return IntentResult {

@@ -6,6 +6,10 @@ use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 use crate::error::CntrlError;
 use crate::services::keychain;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Wire types — standard OpenAI chat completions
+// ─────────────────────────────────────────────────────────────────────────────
+
 #[derive(Serialize)]
 struct ChatMessage<'a> {
     role: &'a str,

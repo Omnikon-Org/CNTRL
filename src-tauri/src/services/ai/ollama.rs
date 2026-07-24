@@ -5,6 +5,10 @@ use serde::{Deserialize, Serialize};
 use super::{CompletionRequest, CompletionResponse, Provider, Tier};
 use crate::error::CntrlError;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Wire types (private to this module)
+// ─────────────────────────────────────────────────────────────────────────────
+
 #[derive(Serialize)]
 struct OllamaGenerateRequest<'a> {
     model: &'a str,
@@ -112,6 +116,7 @@ mod tests {
         assert_eq!(json["model"], "llama3");
         assert_eq!(json["prompt"], "Hello");
         assert_eq!(json["stream"], false);
+        // `system` is skipped when None
         assert!(
             json.get("system").is_none(),
             "system must be omitted when None"
